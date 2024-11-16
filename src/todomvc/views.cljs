@@ -39,7 +39,7 @@
   [:ul.todo-list
    (map-indexed (fn [index item]
                   [:li (cond-> {:replicant/key (:item/id item)
-                                :style {:max-height "calc(24px * 1.2 + 30px)"
+                                :style {:max-height "calc(24px * 1.2 + 40px)"
                                         :overflow-y :hidden
                                         :transition "max-height 0.25s ease-out"}
                                 :replicant/mounting {:style {:max-height 0}}
