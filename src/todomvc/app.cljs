@@ -3,33 +3,16 @@
             [clojure.walk :as walk]
             [cognitect.transit :as t]
             [gadget.inspector :as inspector]
-            [reitit.frontend :as rf]
-            [reitit.frontend.easy :as rfe]
             [replicant.dom :as r-dom]
             [todomvc.actions :as actions]
+            [todomvc.router :as router]
             [todomvc.util :as cu]
             [todomvc.views :as views]))
 
-(def default-db {:app/todo-items []
-                 :app/el nil})
+(def ^:private default-db {:app/todo-items []
+                           :app/el nil})
 
 (defonce ^:private !state (atom nil))
-
-(def ^:private routes [["/" {:name :route/home}]
-                       ["/active" {:name :route/active}]
-                       ["/completed" {:name :route/completed}]])
-
-(defn get-route-actions [{:keys [data]}]
-  (case (:name data)
-    :route/home [[:db/assoc :app/item-filter :filter/all]]
-    :route/active [[:db/assoc :app/item-filter :filter/active]]
-    :route/completed [[:db/assoc :app/item-filter :filter/completed]]))
-
-(defn- start-router! [dispatch!]
-  (rfe/start! (rf/router routes)
-              (fn [m]
-                (dispatch! nil (get-route-actions m)))
-              {:use-fragment true}))
 
 (def storage-key "replicant-todomvc")
 
@@ -88,7 +71,7 @@
   (reset! !state (load-persisted!))
   (inspector/inspect "App state" !state)
   (r-dom/set-dispatch! event-handler)
-  (start-router! event-handler)
+  (router/start! router/routes event-handler)
   (add-watch !state :persist (fn [_ _ old-state new-state]
                                (when (not= old-state new-state)
                                  (render! new-state)
