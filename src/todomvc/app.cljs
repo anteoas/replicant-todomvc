@@ -87,9 +87,11 @@
        :else x))
    action))
 
+(defonce el (js/document.getElementById "app"))
+
 (defn- render! [state]
   (r-dom/render
-   (:app/el state)
+   el
    (views/app-view state)))
 
 (defn- event-handler [{:replicant/keys [^js js-event] :as replicant-data} actions]
@@ -121,7 +123,6 @@
 
 (defn ^:export init! []
   (reset! !state (load-persisted!))
-  (swap! !state assoc :app/el (js/document.getElementById "app"))
   (inspector/inspect "App state" !state)
   (r-dom/set-dispatch! event-handler)
   (start-router! event-handler)
