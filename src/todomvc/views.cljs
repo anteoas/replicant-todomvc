@@ -39,6 +39,11 @@
   [:ul.todo-list
    (map-indexed (fn [index item]
                   [:li (cond-> {:replicant/key (:item/id item)
+                                :style {:max-height "calc(24px * 1.2 + 30px)"
+                                        :transition "max-height 0.25s ease-out"
+                                        :background-color "rgb(255, 255, 255)"}
+                                :replicant/mounting {:style {:max-height 0}}
+                                :replicant/unmounting {:style {:max-height 0}}
                                 :class (when (= index editing-item-index) ["editing"])
                                 :on {:dblclick [[:db/assoc :edit/editing-item-index index]
                                                 [:db/assoc :edit/draft (:item/title item)]]}}
