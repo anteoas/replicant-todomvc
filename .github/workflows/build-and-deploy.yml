@@ -64,8 +64,8 @@ jobs:
 
       - name: Override .gitignore for deployment
         run: |
-          echo "!node_modules/todomvc*/**" >> .gitignore
-          echo "!/js/" >> .gitignore
+          printf "\n!node_modules/todomvc*/**\n" >> .gitignore
+          printf "!/js/\n" >> .gitignore
 
       - name: Deploy app to gh-pages
         if: github.ref == 'refs/heads/main'
