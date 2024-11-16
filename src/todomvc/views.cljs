@@ -52,7 +52,9 @@
                                   :transition "max-height 0.25s ease-out"}
                           :replicant/mounting {:style {:max-height 0}}
                           :replicant/unmounting {:style {:max-height 0}}
-                          :class (when (= index editing-item-index) ["editing"])
+                          :class (cond
+                                   (= index editing-item-index) "editing"
+                                   (:item/completed item)       "completed")
                           :on {:dblclick [[:db/assoc
                                            :edit/editing-item-index index
                                            :edit/draft (:item/title item)]]}}
