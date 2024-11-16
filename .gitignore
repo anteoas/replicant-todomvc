@@ -27,5 +27,6 @@ pom.xml.asc
 /gadget-inspector/
 /scrap/
 
-!/node_modules/{todomvc-app-css,todomvc-common}/
+!/node_modules/todomvc-app-css/
+!/node_modules/todomvc-common/
 !/js/
