@@ -1,0 +1,8 @@
+{:deps true
+ :dev-http {8585 {:root "."
+                  :host "0.0.0.0"}}
+ :builds
+ {:app {:target :browser
+        :output-dir "js/compiled"
+        :asset-path "/js/compiled"
+        :modules {:main {:init-fn todomvc.app/init!}}}}}
