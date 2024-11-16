@@ -19,33 +19,47 @@ As stated above, Replicant is a library. It is _not a framework_. It only concer
 
 When dispatching events, Replicant allows to dispatch data instead of functions. It allows functions too, but we are using the data oriented approach in this app. This keeps our views not only pure functions, but also fully serializable. We arrange the data from the events in vectors of `actions`, where each `action` also is a vector, with the first element being the action name, and the rest is action arguments.
 
+### The app state
+
+The app state is a Clojure atom where the current state is stored as a map.
+
+### App start
+
+When the applications starts we initialize the app state, Replicant, and the router. The state is populated from local storage, or, lacking that, a default map. Both the router and Replicant are initialized with the event handler, meaning that both can dispatch events.
+
+Next we register a watcher on the app state. This watcher will be called whenever the state changes. We use this to trigger a re-render of the app and also for persisting the state to local storage.
+
+Last thing in the app start is to render the app with the initial state.
+
 ### The event handler
 
 Replicant will provide our event handler with our event data (`actions`), plus some information about the event itself. We use this information to “enrich” the event data, so that our action handlers have information about things like the event source and the event target.
 
-From there, the event handler is just a simple dispatcher, dispatching on the action name. An action handler can update the app state, and any other side effects. When all actions of an event are handled, we ask Replicant to render the app, providing the current state. If the state has not changed, Replicant will do no re-rendering.
+The event handler is just a simple dispatcher, dispatching on the action name. An action handler can update the app state, and perform any other side effects.
 
-The event handler is the only place (with one exception) where we allow side effects. This is our imperative shell. The exception is the app start, where we initialize the app state, the router, and Replicant.
+### Rendering
+
+When all actions of an event are handled, we ask Replicant to render the app, providing the current state. If the state has not changed, Replicant will do no re-rendering.
 
 ### The actions
 
 Actions can be big and monolithic or small and composable. It can be any mix in an application. In this example, we try to stay with the composable approach. Implementing some primitive actions, we can compose more complex event handlers.
 
-### Persistence
-
-The app starts with reading any peristed state from local storage, using a default state if there is nothing persisted.
-
-The event handler takes care of persisting the relevant parts of the app state to local storage.
-
 ### The views
 
-The views are pure functions that return Hiccup (Clojure vectors representing the DOM). The functions have no local state (and don't use any globel state either), operating only on the data provided to them. The views are part of the application's functional core.
+The views are pure functions that return Hiccup (Clojure vectors representing the DOM). The functions have no local state (and don't use any globel state either), operating only on the data provided to them.
 
 Replicant calls the top view with the app state, and that view then calls all the other views in a cascade. In development you can evaluate any subview in the REPL, while iterating on it, and examine what data (Hiccup) it returns. Since there is no local or global state, all you need to do is prvide enough data to the view. You can also write tests for the views. Hiccup is super easy to inspect.
 
 ### Routing
 
 We use [Reitit](https://github.com/metosin/reitit) for routing. The route table is pure data, and the router dipatches `actions` (pure data, remember?) for our event handler.
+
+### Side effects
+
+Counting rendering as a side effect, the app is side-effecting as part of the application start, in the event handler, and from the app state atom watcher.
+
+From a business rules perspective, the only side effects happen in the event handler.
 
 ### Read more about the general approach in the mini-app example
 
