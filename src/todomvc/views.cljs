@@ -40,8 +40,8 @@
    (map-indexed (fn [index item]
                   [:li (cond-> {:replicant/key (:item/id item)
                                 :style {:max-height "calc(24px * 1.2 + 30px)"
-                                        :transition "max-height 0.25s ease-out"
-                                        :background-color "rgb(255, 255, 255)"}
+                                        :overflow-y :hidden
+                                        :transition "max-height 0.25s ease-out"}
                                 :replicant/mounting {:style {:max-height 0}}
                                 :replicant/unmounting {:style {:max-height 0}}
                                 :class (when (= index editing-item-index) ["editing"])
