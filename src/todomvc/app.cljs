@@ -67,18 +67,12 @@
       delete-item? (assoc :app/mark-all-state (not (get-mark-all-as-state (:app/todo-items state))))
       :always (dissoc :edit/editing-item-index :edit/keyup-code))))
 
-(defn- js-get-in [o path]
-  (reduce (fn [acc k]
-            (unchecked-get acc k))
-          o
-          path))
-
 (defn- enrich-action-from-event [{:replicant/keys [js-event node]} actions]
   (walk/postwalk
    (fn [x]
      (if (keyword? x)
        (cond (= "event" (namespace x)) (let [path (string/split (name x) #"\.")]
-                                         (js-get-in js-event path))
+                                         (cu/js-get-in js-event path))
              (= :dom/node x) node
              :else x)
        x))
