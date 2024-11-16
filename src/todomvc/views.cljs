@@ -45,8 +45,9 @@
                                 :replicant/mounting {:style {:max-height 0}}
                                 :replicant/unmounting {:style {:max-height 0}}
                                 :class (when (= index editing-item-index) ["editing"])
-                                :on {:dblclick [[:db/assoc :edit/editing-item-index index]
-                                                [:db/assoc :edit/draft (:item/title item)]]}}
+                                :on {:dblclick [[:db/assoc
+                                                 :edit/editing-item-index index
+                                                 :edit/draft (:item/title item)]]}}
                          (and (= :filter/active item-filter)
                               (:item/completed item)) (assoc :style {:display "none"})
                          (and (= :filter/completed item-filter)

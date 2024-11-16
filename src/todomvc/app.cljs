@@ -87,9 +87,11 @@
        :else x))
    action))
 
+(defonce el (js/document.getElementById "app"))
+
 (defn- render! [state]
   (r-dom/render
-   (:app/el state)
+   el
    (views/app-view state)))
 
 (defn- event-handler [{:replicant/keys [^js js-event] :as replicant-data} actions]
@@ -112,17 +114,20 @@
         :dom/focus-element (.focus (first args))
         :dom/prevent-default (.preventDefault js-event)
         :dom/set-input-text (set! (.-value (first args)) (second args))
-        :edit/end-editing (apply swap! !state end-editing (:edit/keyup-code @!state) args))
-      (persist! @!state)))
-  (render! @!state))
+        :edit/end-editing (apply swap! !state end-editing (:edit/keyup-code @!state) args)))))
 
 (defn ^{:dev/after-load true :export true} start! []
   (render! @!state))
 
 (defn ^:export init! []
   (reset! !state (load-persisted!))
-  (swap! !state assoc :app/el (js/document.getElementById "app"))
   (inspector/inspect "App state" !state)
   (r-dom/set-dispatch! event-handler)
   (start-router! event-handler)
+  (add-watch !state :persist (fn [_ _ old-state new-state]
+                               (when (not= old-state new-state)
+                                 (render! new-state)
+                                 (when (not= (select-keys old-state persist-keys)
+                                             (select-keys new-state persist-keys))
+                                   (persist! new-state)))))
   (start!))
