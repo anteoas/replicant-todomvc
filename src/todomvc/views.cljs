@@ -34,34 +34,38 @@
                         :keyup [[:db/assoc :edit/keyup-code :event/code]]
                         :input [[:db/assoc :edit/draft :event/target.value]]}}]]))
 
+(defn- item-visible? [item item-filter]
+  (or (= :filter/all item-filter)
+      (and (= :filter/active item-filter)
+           (not (:item/completed item)))
+      (and (= :filter/completed item-filter)
+           (:item/completed item))))
+
 (defn- todo-list-view [{:keys [app/todo-items edit/editing-item-index app/item-filter]
                         :as state}]
   [:ul.todo-list
    (map-indexed (fn [index item]
-                  [:li (cond-> {:replicant/key (:item/id item)
-                                :style {:max-height "calc(24px * 1.2 + 40px)"
-                                        :overflow-y :hidden
-                                        :transition "max-height 0.25s ease-out"}
-                                :replicant/mounting {:style {:max-height 0}}
-                                :replicant/unmounting {:style {:max-height 0}}
-                                :class (when (= index editing-item-index) ["editing"])
-                                :on {:dblclick [[:db/assoc
-                                                 :edit/editing-item-index index
-                                                 :edit/draft (:item/title item)]]}}
-                         (and (= :filter/active item-filter)
-                              (:item/completed item)) (assoc :style {:display "none"})
-                         (and (= :filter/completed item-filter)
-                              (not (:item/completed item))) (assoc :style {:display "none"}))
-                   [:div.view
-                    [:input.toggle {:type :checkbox
-                                    :checked (:item/completed item)
-                                    :on {:change [[:db/update-in [:app/todo-items index :item/completed] not]
-                                                  [:app/set-mark-all-state]]}}]
-                    [:label (:item/title item)]
-                    [:button.destroy {:on {:click [[:db/update :app/todo-items (partial cu/remove-nth index)]
-                                                   [:app/set-mark-all-state]]}}]]
-                   (edit-view (merge state {:index index
-                                            :item item}))])
+                  (when (item-visible? item item-filter)
+                    [:li {:replicant/key (:item/id item)
+                          :style {:max-height "calc(24px * 1.2 + 40px)"
+                                  :overflow-y :hidden
+                                  :transition "max-height 0.25s ease-out"}
+                          :replicant/mounting {:style {:max-height 0}}
+                          :replicant/unmounting {:style {:max-height 0}}
+                          :class (when (= index editing-item-index) ["editing"])
+                          :on {:dblclick [[:db/assoc
+                                           :edit/editing-item-index index
+                                           :edit/draft (:item/title item)]]}}
+                     [:div.view
+                      [:input.toggle {:type :checkbox
+                                      :checked (:item/completed item)
+                                      :on {:change [[:db/update-in [:app/todo-items index :item/completed] not]
+                                                    [:app/set-mark-all-state]]}}]
+                      [:label (:item/title item)]
+                      [:button.destroy {:on {:click [[:db/update :app/todo-items (partial cu/remove-nth index)]
+                                                     [:app/set-mark-all-state]]}}]]
+                     (edit-view (merge state {:index index
+                                              :item item}))]))
                 todo-items)])
 
 (defn- main-view [{:keys [app/todo-items] :as state}]
