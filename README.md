@@ -7,7 +7,7 @@ An implementation of the [TodoMVC](http://todomvc.com) app using the [Replicant]
 
 Replicant is a Clojure and ClojureScript library. Working with it has many similarities with React, but it is not using React and thus not depending on React and everything that React depends on. In fact Replicant has zero/zilch/no dependencies at all.
 
-The example shows a way (of infinitely many) to wire up a Replicant app, with a focus on keeping the views as pure data. We can do this because replicant supports pure data dom event handlers and vdom lifecycle hooks.
+The example shows a way (of infinitely many) to wire up a Replicant app, with a focus on keeping the views as pure data. We can do this because replicant supports pure data DOM event handlers and VDOM lifecycle hooks.
 
 To understand a bit of where Replicant comes from, please watch Christian Johansen's talk at JavaZone 2023, [Stateless, Data-driven UIs](https://2023.javazone.no/program/85f23370-440f-42b5-bf50-4cb811fef44d).
 
