@@ -2,13 +2,13 @@
 
 An implementation of the [TodoMVC](http://todomvc.com) app using the [Replicant](https://github.com/cjohansen/replicant) library.
 
-This is an example of how to wire up a Replicant app, with a focus on keeping the views as pure data. We can do this because replicant supports pure data dom event handlers and vdom lifecycle hooks.
+***Replicant***: _A native [ClojureScript](https://clojurescript.org) virtual DOM renderer - render hiccup directly_
 
-**Replicant**: A native [ClojureScript](https://clojurescript.org) virtual DOM renderer - render hiccup directly
+The example shows a way (of many) to wire up a Replicant app, with a focus on keeping the views as pure data. We can do this because replicant supports pure data dom event handlers and vdom lifecycle hooks.
 
 To understand a bit of where Replicant (and this app example) comes from, please watch Christian Johansen's talk at JavaZone 2023, [Stateless, Data-driven UIs](https://2023.javazone.no/program/85f23370-440f-42b5-bf50-4cb811fef44d).
 
-To understand a bit more about this example, read the more comprehensive README of the [Replicant mini-app](https://github.com/anteoas/replicant-mini-app) example.
+To understand a bit more about the code in this example, read the more comprehensive README of the [Replicant mini-app](https://github.com/anteoas/replicant-mini-app) example.
 
 ## Running the app in development mode
 
