@@ -1,6 +1,6 @@
 (ns todomvc.views
   (:require [clojure.string :as string]
-            [todomvc.clojure-util :as cu]))
+            [todomvc.util :as cu]))
 
 (defn- maybe-add [coll s]
   (let [trimmed (string/trim s)]
@@ -52,7 +52,7 @@
                                     :on {:change [[:db/update-in [:app/todo-items index :item/completed] not]
                                                   [:app/set-mark-all-state]]}}]
                     [:label (:item/title item)]
-                    [:button.destroy {:on {:click [[:db/update :app/todo-items (partial cu/remove-index index)]
+                    [:button.destroy {:on {:click [[:db/update :app/todo-items (partial cu/remove-nth index)]
                                                    [:app/set-mark-all-state]]}}]]
                    (edit-view (merge state {:index index
                                             :item item}))])

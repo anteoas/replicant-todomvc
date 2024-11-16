@@ -6,7 +6,7 @@
             [reitit.frontend :as rf]
             [reitit.frontend.easy :as rfe]
             [replicant.dom :as r-dom]
-            [todomvc.clojure-util :as cu]
+            [todomvc.util :as cu]
             [todomvc.views :as views]))
 
 (def default-db {:app/todo-items []
@@ -63,7 +63,7 @@
         delete-item? (string/blank? draft)]
     (cond-> state
       save-edit? (assoc-in [:app/todo-items index :item/title] draft)
-      delete-item? (update :app/todo-items (partial cu/remove-index index))
+      delete-item? (update :app/todo-items (partial cu/remove-nth index))
       delete-item? (assoc :app/mark-all-state (not (get-mark-all-as-state (:app/todo-items state))))
       :always (dissoc :edit/editing-item-index :edit/keyup-code))))
 
