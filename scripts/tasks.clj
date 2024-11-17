@@ -62,5 +62,6 @@
                                      ["package.json"]
                                      ["shadow-cljs.edn"]
                                      ["README.md"]
-                                     ["stateless-data-driven-uis.png"]])
+                                     ["stateless-data-driven-uis.png"]
+                                     ["LICENSE.md"]])
     (p/shell "tree" app-dir)))
