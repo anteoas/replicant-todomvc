@@ -7,11 +7,9 @@
   (let [as-state (if (every? :item/completed items)
                    false
                    (every? :item/completed (filter :item/completed items)))]
-    (prn "Mark all as state" as-state)
     as-state))
 
 (defn- mark-items-as [items completed?]
-  (println "Marking items as" completed?)
   (mapv (fn [item]
           (assoc item :item/completed completed?))
         items))
