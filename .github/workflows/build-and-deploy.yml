@@ -62,16 +62,14 @@ jobs:
           set -x
           npm run build
 
-      - name: Override .gitignore for deployment
+      - name: Copy to app folder
         run: |
-          printf "\n\n" >> .gitignore
-          echo "!/node_modules/todomvc-app-css/" >> .gitignore
-          echo "!/node_modules/todomvc-common/" >> .gitignore
-          echo "!/js/" >> .gitignore
+          set -x
+          bb copy-to-app-dir
 
       - name: Deploy app to gh-pages
         if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+          publish_dir: replicant-todomvc
