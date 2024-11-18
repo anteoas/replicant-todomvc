@@ -28,8 +28,8 @@
 
 (defn handle-action [state _replicant-data action]
   (match action
-    [:app/ax.mark-all-items-as items completed?]
-    {:new-state (assoc state :app/todo-items (mark-items-as items completed?))}
+    [:app/ax.mark-all-items-as completed?]
+    {:new-state (update state :app/todo-items mark-items-as completed?)}
 
     [:app/ax.set-mark-all-state]
     {:new-state (let [items (:app/todo-items state)]
