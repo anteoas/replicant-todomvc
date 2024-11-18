@@ -25,7 +25,7 @@
   (when (and (= index editing-item-index)
              (not= "Escape" keyup-code))
     [:form {:replicant/key (:item/id item)
-            :replicant/on-unmount [[:edit/ax.end-editing (string/trim draft) index]]
+            :replicant/on-unmount [[:edit/ax.end-editing draft index]]
             :on {:submit (into [[:dom/ax.prevent-default]
                                 [:db/ax.dissoc :edit/editing-item-index]])}}
      [:input.edit {:replicant/on-mount [[:dom/ax.focus-element :dom/node]]
