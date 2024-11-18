@@ -55,6 +55,9 @@
     (fs/copy-tree (fs/path "src")
                   (fs/path app-dir "src")
                   {:replace-existing true})
+    (fs/copy-tree (fs/path "test")
+                  (fs/path app-dir "test")
+                  {:replace-existing true})
     (fs/create-dirs (fs/path app-dir "js" "compiled"))
     (copy-paths-to-app-dir! app-dir [["index.html"]
                                      ["js" "compiled" "main.js"]

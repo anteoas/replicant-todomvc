@@ -18,6 +18,7 @@ pom.xml.asc
 .DS_Store
 
 /js/
+/out/
 
 .calva/output-window
 .calva/repl.calva-repl
