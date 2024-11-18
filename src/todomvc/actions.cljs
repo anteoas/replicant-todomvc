@@ -15,7 +15,6 @@
         items))
 
 (defn- end-editing [state keyup-code draft index]
-  (js/console.debug 'end-editing keyup-code draft index)
   (let [save-edit? (and (not (string/blank? draft))
                         (not= "Escape" keyup-code))
         delete-item? (string/blank? draft)]
