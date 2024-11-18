@@ -70,12 +70,12 @@
                                               :item item}))]))
                 todo-items)])
 
-(defn- main-view [{:keys [app/todo-items] :as state}]
+(defn- main-view [state]
   [:div.main
    [:input#toggle-all.toggle-all {:type :checkbox
                                   :checked (:app/mark-all-state state)
                                   :on {:change [[:db/ax.assoc :app/mark-all-state :event/target.checked]
-                                                [:app/ax.mark-all-items-as todo-items :event/target.checked]]}}]
+                                                [:app/ax.mark-all-items-as :event/target.checked]]}}]
    [:label {:for "toggle-all"}
     "Mark all as complete"]
    (todo-list-view state)])
