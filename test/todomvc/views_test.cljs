@@ -15,4 +15,14 @@
     (is (= 0 (count (sut/maybe-add [] "")))))
 
   (testing "it should not add a new item when the string is blank"
-    (is (= 0 (count (sut/maybe-add [] "   "))))))
+    (is (= 0 (count (sut/maybe-add [] "   ")))))
+
+  (testing "it should trim the string before adding a new item"
+    (is (= "New item" (-> (sut/maybe-add [] "  New item  ")
+                          first
+                          :item/title))))
+
+  (testing "items are added to the end of the list"
+    (is (= "Second item" (-> (sut/maybe-add [{:item/title "First item"}] "Second item")
+                             second
+                             :item/title)))))
