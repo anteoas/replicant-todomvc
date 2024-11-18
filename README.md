@@ -91,20 +91,30 @@ Prerequisites:
 npm run build
 ```
 
+#### Testing
+
+```sh
+node out/tests.js
+```
+
+This tests business rules and some parts of our tiny framework. Since the software under test is free of side effects, we can test it without a browser. (The TodoMVC project has end-to-end in-browser tests, which all pass with this example app.)
+
 ### Running the app in development mode
 
 We're using [shadow-cljs](https://github.com/thheller/shadow-cljs) to build the app. Clojure editors like [Calva](https://calva.io) and [CIDER](https://cider.mx/) will let you quickly start the app and connect you to its REPL. You can also just run it without installing anything, by using npx:
 
 ```sh
-npx shadow-cljs watch :app
+npx shadow-cljs watch :app :test
 ```
 
 Once built, you can access the app at http://localhost:8585
 
+Once built, the tests are run and they will also run on any changes to the tests or the software under test.
+
 To start the app with a Clojure editor friendly nREPL server, run:
 
 ```sh
-npx shadow-cljs -d cider/cider-nrepl:0.50.2 watch :app
+npx shadow-cljs -d cider/cider-nrepl:0.50.2 watch :app :test
 ```
 
 ## License

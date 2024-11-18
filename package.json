@@ -11,7 +11,9 @@
   "author": "PEZ",
   "license": "MIT",
   "scripts": {
-    "build": "shadow-cljs release app"
+    "build": "shadow-cljs release app",
+    "pretest": "shadow-cljs release test-compile",
+    "test": "node out/tests.js"
   },
   "devDependencies": {
     "shadow-cljs": "^2.28.12"
