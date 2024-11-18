@@ -61,7 +61,7 @@ When all actions of an event are handled, we ask Replicant to render the app, pr
 
 The views are pure functions that return Hiccup (Clojure vectors representing the DOM). The functions have no local state (and don't use any globel state either), operating only on the data provided to them. This is deliberately imposed by the Replicant library, which doesn't suport local state.
 
-Replicant calls the top view with the app state, and that view then calls all the other views in a cascade. In development you can evaluate any subview in the REPL, while iterating on it, and examine what data (Hiccup) it returns. Since there is no local or global state, all you need to do is prvide enough data to the view. You can also write tests for the views. Hiccup is super easy to inspect.
+Replicant calls the top view with the app state, and that view then calls all the other views in a cascade. In development you can evaluate any subview in the REPL, while iterating on it, and examine what data (Hiccup) it returns. Since there is no local or global state, all you need to do is prvide enough data to the view. You can also write tests for the views.
 
 ### Routing
 
