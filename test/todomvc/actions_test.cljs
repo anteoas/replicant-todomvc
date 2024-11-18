@@ -7,12 +7,15 @@
   (testing "false when all items are completed"
     (is (false? (sut/get-mark-all-as-state [{:item/completed true}
                                             {:item/completed true}]))))
+
   (testing "true when no items are completed"
     (is (true? (sut/get-mark-all-as-state [{:item/completed false}
                                            {:item/completed false}]))))
+
   (testing "true when some items are completed"
     (is (true? (sut/get-mark-all-as-state [{:item/completed true}
                                            {:item/completed false}]))))
+
   (testing "true when items list is empty"
     (is (true? (sut/get-mark-all-as-state [])))))
 
@@ -24,6 +27,7 @@
            (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
                :new-state
                :app/mark-all-state)))))
+
   (testing "it should set mark-all-state to false when some items are not completed"
     (let [state {:app/todo-items [{:item/completed true}
                                   {:item/completed false}]}]
@@ -31,6 +35,7 @@
            (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
                :new-state
                :app/mark-all-state))))
+
     (testing "it should set mark-all-state to false when all items are not completed"
       (let [state {:app/todo-items [{:item/completed false}
                                     {:item/completed false}]}]
@@ -38,6 +43,7 @@
              (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
                  :new-state
                  :app/mark-all-state))))))
+
   (testing "it should set mark-all-state to false when items list is empty"
     (let [state {:app/todo-items []}]
       (is (false?
@@ -70,8 +76,9 @@
     (is (= {:new-state {:foo :bar
                         :baz :gaz
                         :something :something}}
-           (sut/handle-action {:something :something} {} [:db/ax.assoc :foo :bar :baz :gaz])))
-    (testing "it replaces any value at an existing key")
+           (sut/handle-action {:something :something} {} [:db/ax.assoc :foo :bar :baz :gaz]))))
+
+  (testing "it replaces any value at an existing key"
     (is (= {:new-state {:foo :bar
                         :something :something}}
            (sut/handle-action {:foo :existing-value
