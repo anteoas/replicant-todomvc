@@ -11,28 +11,28 @@
                   :item/id (random-uuid)}))))
 
 (defn- add-view [{:keys [add/draft]}]
-  [:form {:on {:submit [[:dom/prevent-default]
-                        [:db/update :app/todo-items maybe-add draft]
-                        [:db/assoc :add/draft ""]
-                        [:dom/set-input-text [:db/get :add/draft-input-element] ""]]}}
-   [:input.new-todo {:replicant/on-mount [[:db/assoc :add/draft-input-element :dom/node]]
+  [:form {:on {:submit [[:dom/ax.prevent-default]
+                        [:db/ax.update :app/todo-items maybe-add draft]
+                        [:db/ax.assoc :add/draft ""]
+                        [:dom/ax.set-input-text [:db/get :add/draft-input-element] ""]]}}
+   [:input.new-todo {:replicant/on-mount [[:db/ax.assoc :add/draft-input-element :dom/node]]
                      :type :text
                      :autofocus true
                      :placeholder "What needs to be done?"
-                     :on {:input [[:db/assoc :add/draft :event/target.value]]}}]])
+                     :on {:input [[:db/ax.assoc :add/draft :event/target.value]]}}]])
 
 (defn- edit-view [{:keys [index item edit/editing-item-index edit/draft edit/keyup-code]}]
   (when (and (= index editing-item-index)
              (not= "Escape" keyup-code))
     [:form {:replicant/key (:item/id item)
-            :replicant/on-unmount [[:edit/end-editing (string/trim draft) index]]
-            :on {:submit (into [[:dom/prevent-default]
-                                [:db/dissoc :edit/editing-item-index]])}}
-     [:input.edit {:replicant/on-mount [[:dom/focus-element :dom/node]]
+            :replicant/on-unmount [[:edit/ax.end-editing (string/trim draft) index]]
+            :on {:submit (into [[:dom/ax.prevent-default]
+                                [:db/ax.dissoc :edit/editing-item-index]])}}
+     [:input.edit {:replicant/on-mount [[:dom/ax.focus-element :dom/node]]
                    :value (:item/title item)
-                   :on {:blur [[:db/dissoc :edit/editing-item-index]]
-                        :keyup [[:db/assoc :edit/keyup-code :event/code]]
-                        :input [[:db/assoc :edit/draft :event/target.value]]}}]]))
+                   :on {:blur [[:db/ax.dissoc :edit/editing-item-index]]
+                        :keyup [[:db/ax.assoc :edit/keyup-code :event/code]]
+                        :input [[:db/ax.assoc :edit/draft :event/target.value]]}}]]))
 
 (defn- item-visible? [item item-filter]
   (or (= :filter/all item-filter)
@@ -55,17 +55,17 @@
                           :class (cond
                                    (= index editing-item-index) "editing"
                                    (:item/completed item)       "completed")
-                          :on {:dblclick [[:db/assoc
+                          :on {:dblclick [[:db/ax.assoc
                                            :edit/editing-item-index index
                                            :edit/draft (:item/title item)]]}}
                      [:div.view
                       [:input.toggle {:type :checkbox
                                       :checked (:item/completed item)
-                                      :on {:change [[:db/update-in [:app/todo-items index :item/completed] not]
-                                                    [:app/set-mark-all-state]]}}]
+                                      :on {:change [[:db/ax.update-in [:app/todo-items index :item/completed] not]
+                                                    [:app/ax.set-mark-all-state]]}}]
                       [:label (:item/title item)]
-                      [:button.destroy {:on {:click [[:db/update :app/todo-items (partial cu/remove-nth index)]
-                                                     [:app/set-mark-all-state]]}}]]
+                      [:button.destroy {:on {:click [[:db/ax.update :app/todo-items (partial cu/remove-nth index)]
+                                                     [:app/ax.set-mark-all-state]]}}]]
                      (edit-view (merge state {:index index
                                               :item item}))]))
                 todo-items)])
@@ -74,8 +74,8 @@
   [:div.main
    [:input#toggle-all.toggle-all {:type :checkbox
                                   :checked (:app/mark-all-state state)
-                                  :on {:change [[:db/assoc :app/mark-all-state :event/target.checked]
-                                                [:app/mark-all-items-as todo-items :event/target.checked]]}}]
+                                  :on {:change [[:db/ax.assoc :app/mark-all-state :event/target.checked]
+                                                [:app/ax.mark-all-items-as todo-items :event/target.checked]]}}]
    [:label {:for "toggle-all"}
     "Mark all as complete"]
    (todo-list-view state)])
@@ -96,7 +96,7 @@
       [:li [:a {:class (when (= :filter/completed item-filter) "selected")
                 :href "#/completed"} "Completed"]]]
      (when (seq (filter :item/completed todo-items))
-       [:button.clear-completed {:on {:click [[:db/update :app/todo-items (partial filterv (complement :item/completed))]]}}
+       [:button.clear-completed {:on {:click [[:db/ax.update :app/todo-items (partial filterv (complement :item/completed))]]}}
         "Clear completed"])]))
 
 (defn- app-footer-view []

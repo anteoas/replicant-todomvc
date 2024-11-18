@@ -35,19 +35,31 @@ Last thing in the app start is to render the app with the initial state.
 
 Replicant will provide our event handler with our event data (`actions`), plus some information about the event itself. We use this information to “enrich” the event data, so that our action handlers have information about things like the event source and the event target.
 
-The event handler is just a simple dispatcher, dispatching on the action name. An action handler can update the app state, and perform any other side effects.
+For each action, the event handler calls the action handler which returns a new state and/or effects to be performed. The event handler will replace the app state with any new state, and/or call the effect handler if there with any effects.
+
+### Action handler
+
+The action handler dispatches on the action name and returns a new state and/or `effects`. `effects` is a vector, similar to the `actions` vector. An `effect` is also a vector, similar to an `action` vector. This makes the action handler a pure function, that can be easily tested.
+
+#### The actions
+
+Actions can be big and monolithic or small and composable. It can be any mix in an application. In this example, we try to stay with the composable approach. Implementing some primitive actions, we can compose more complex event handlers.
+
+### Effect handlers
+
+The effect handler dispatches on the effect name and actually performs the effect. Since the effect handler is not pure, it is not suitable for unit testing. Therefore we keep them stupid. Any logic should be placed in the action handlers. To encourage this stupidness the effect handler is not passed the application state.
+
+### Only actions in event handlers
+
+The event handlers are attached to elements in [the views](#views). Since we only allow actions in an event handler, the view cannot reference effects directly. Therefore there sometimes is a bit of inderection with an event handler using an action only to “access” an effect. It would be entirely possiblee to allow `effects` directly in the event handler, but this would complicate the code of our tiny framework. We want this code to be as simple as possible.
 
 ### Rendering
 
 When all actions of an event are handled, we ask Replicant to render the app, providing the current state. If the state has not changed, Replicant will do no re-rendering.
 
-### The actions
+### Views
 
-Actions can be big and monolithic or small and composable. It can be any mix in an application. In this example, we try to stay with the composable approach. Implementing some primitive actions, we can compose more complex event handlers.
-
-### The views
-
-The views are pure functions that return Hiccup (Clojure vectors representing the DOM). The functions have no local state (and don't use any globel state either), operating only on the data provided to them.
+The views are pure functions that return Hiccup (Clojure vectors representing the DOM). The functions have no local state (and don't use any globel state either), operating only on the data provided to them. This is deliberately imposed by the Replicant library, which doesn't suport local state.
 
 Replicant calls the top view with the app state, and that view then calls all the other views in a cascade. In development you can evaluate any subview in the REPL, while iterating on it, and examine what data (Hiccup) it returns. Since there is no local or global state, all you need to do is prvide enough data to the view. You can also write tests for the views. Hiccup is super easy to inspect.
 
@@ -95,7 +107,7 @@ To start the app with a Clojure editor friendly nREPL server, run:
 npx shadow-cljs -d cider/cider-nrepl:0.50.2 watch :app
 ```
 
-## Licence
+## License
 
 Public Domain, **Unlicense**. See [LICENSE.md](LICENSE.md).
 
