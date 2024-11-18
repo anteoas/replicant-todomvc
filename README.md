@@ -99,7 +99,6 @@ npx shadow-cljs -d cider/cider-nrepl:0.50.2 watch :app
 
 Public Domain, **Unlicense**. See [LICENSE.md](LICENSE.md).
 
-
 ## Implementation repository
 
 This example is maintained at the [replicant-todomvc](https://github.com/anteoas/replicant-todomvc) repository.
