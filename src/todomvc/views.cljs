@@ -25,7 +25,7 @@
   (when (and (= index editing-item-index)
              (not= "Escape" keyup-code))
     [:form {:replicant/key (:item/id item)
-            :replicant/on-unmount [[:edit/ax.end-editing (string/trim draft) index]]
+            :replicant/on-unmount [[:edit/ax.end-editing draft index]]
             :on {:submit (into [[:dom/ax.prevent-default]
                                 [:db/ax.dissoc :edit/editing-item-index]])}}
      [:input.edit {:replicant/on-mount [[:dom/ax.focus-element :dom/node]]
@@ -70,12 +70,12 @@
                                               :item item}))]))
                 todo-items)])
 
-(defn- main-view [{:keys [app/todo-items] :as state}]
+(defn- main-view [state]
   [:div.main
    [:input#toggle-all.toggle-all {:type :checkbox
                                   :checked (:app/mark-all-state state)
                                   :on {:change [[:db/ax.assoc :app/mark-all-state :event/target.checked]
-                                                [:app/ax.mark-all-items-as todo-items :event/target.checked]]}}]
+                                                [:app/ax.mark-all-items-as :event/target.checked]]}}]
    [:label {:for "toggle-all"}
     "Mark all as complete"]
    (todo-list-view state)])
