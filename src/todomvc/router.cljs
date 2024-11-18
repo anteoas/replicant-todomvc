@@ -8,9 +8,9 @@
 
 (defn- get-route-actions [{:keys [data]}]
   (case (:name data)
-    :route/home [[:db/assoc :app/item-filter :filter/all]]
-    :route/active [[:db/assoc :app/item-filter :filter/active]]
-    :route/completed [[:db/assoc :app/item-filter :filter/completed]]))
+    :route/home [[:db/ax.assoc :app/item-filter :filter/all]]
+    :route/active [[:db/ax.assoc :app/item-filter :filter/active]]
+    :route/completed [[:db/ax.assoc :app/item-filter :filter/completed]]))
 
 (defn start! [routes dispatch!]
   (rfe/start! (rf/router routes)

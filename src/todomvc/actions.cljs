@@ -24,40 +24,55 @@
       delete-item? (assoc :app/mark-all-state (not (get-mark-all-as-state (:app/todo-items state))))
       :always (dissoc :edit/editing-item-index :edit/keyup-code))))
 
-(defn handle-action! [!state {:keys [^js replicant/js-event]} action]
+(defn handle-action [state _replicant-data action]
   (match action
-    [:app/mark-all-items-as items completed?]
-    (swap! !state assoc :app/todo-items (mark-items-as items completed?))
+    [:app/ax.mark-all-items-as items completed?]
+    {:new-state (assoc state :app/todo-items (mark-items-as items completed?))}
 
-    [:app/set-mark-all-state]
-    (swap! !state assoc :app/mark-all-state (not (get-mark-all-as-state (:app/todo-items @!state))))
+    [:app/ax.set-mark-all-state]
+    {:new-state (let [items (:app/todo-items state)]
+                  (assoc state :app/mark-all-state (not (get-mark-all-as-state items))))}
 
-    [:console/debug & args]
+    [:console/ax.debug & args]
+    {:effects [(into [:console/fx.debug] args)]}
+
+    [:db/ax.assoc & args]
+    {:new-state (apply assoc state args)}
+
+    [:db/ax.assoc-in path v]
+    {:new-state (assoc-in state path v)}
+
+    [:db/ax.dissoc & args]
+    {:new-state (apply dissoc state args)}
+
+    [:db/ax.update k f & args]
+    {:new-state (apply update state k f args)}
+
+    [:db/ax.update-in path & args]
+    {:new-state (apply update-in state path args)}
+
+    [:dom/ax.focus-element element]
+    {:effects [[:dom/fx.focus-element element]]}
+
+    [:dom/ax.prevent-default]
+    {:effects [[:dom/fx.prevent-default]]}
+
+    [:dom/ax.set-input-text element text]
+    {:effects [[:dom/fx.set-input-text element text]]}
+
+    [:edit/ax.end-editing draft index]
+    {:new-state (end-editing state (:edit/keyup-code state) draft index)}))
+
+(defn perform-effect! [{:keys [^js replicant/js-event]} effect]
+  (match effect
+    [:console/fx.debug & args]
     (apply (comp js/console.debug prn) args)
 
-    [:db/assoc & args]
-    (apply swap! !state assoc args)
-
-    [:db/assoc-in path v]
-    (apply swap! !state assoc-in path v)
-
-    [:db/dissoc & args]
-    (apply swap! !state dissoc args)
-
-    [:db/update k f & args]
-    (apply swap! !state update k f args)
-
-    [:db/update-in path & args]
-    (apply swap! !state update-in path args)
-
-    [:dom/focus-element element]
+    [:dom/fx.focus-element element]
     (.focus element)
 
-    [:dom/prevent-default]
+    [:dom/fx.prevent-default]
     (.preventDefault js-event)
 
-    [:dom/set-input-text element text]
-    (set! (.-value element) text)
-
-    [:edit/end-editing draft index]
-    (swap! !state end-editing (:edit/keyup-code @!state) draft index)))
+    [:dom/fx.set-input-text element text]
+    (set! (.-value element) text)))
