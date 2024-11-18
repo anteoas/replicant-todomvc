@@ -3,7 +3,7 @@
             [clojure.test :refer [deftest is testing]]))
 
 #_{:clj-kondo/ignore [:private-call]}
-(deftest test-get-mark-all-as-state
+(deftest get-mark-all-as-state
   (testing "false when all items are completed"
     (is (false? (sut/get-mark-all-as-state [{:item/completed true}
                                             {:item/completed true}]))))
