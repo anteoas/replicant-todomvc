@@ -38,11 +38,11 @@
 
 (defn- event-handler [replicant-data actions]
   (doseq [action actions]
-    (prn "Triggered action" action)
+    (when js/goog.DEBUG (prn "Triggered action" action))
     (let [enriched-action (->> action
                                (enrich-action-from-event replicant-data)
                                (enrich-action-from-state @db/!state))]
-      (prn "Enriched action" enriched-action)
+      (when js/goog.DEBUG (prn "Enriched action" enriched-action))
       (actions/handle-action! db/!state replicant-data enriched-action))))
 
 (defn ^{:dev/after-load true :export true} start! []

@@ -6,7 +6,7 @@
 (def ^:private default-db {:app/todo-items []
                            :app/el nil})
 
-(def ^:private storage-key "replicant-todomvc")
+(def ^:private storage-key "todos-replicant")
 
 (def ^:private persist-keys [:app/todo-items
                              :add/draft
