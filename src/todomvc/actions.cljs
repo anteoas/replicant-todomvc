@@ -1,7 +1,28 @@
 (ns todomvc.actions
   (:require [clojure.core.match :refer [match]]
             [clojure.string :as string]
+            [clojure.walk :as walk]
             [todomvc.util :as util]))
+
+(defn- enrich-action-from-replicant-data [{:replicant/keys [js-event node]} actions]
+  (walk/postwalk
+   (fn [x]
+     (if (keyword? x)
+       (cond (= "event" (namespace x)) (let [path (string/split (name x) #"\.")]
+                                         (util/js-get-in js-event path))
+             (= :dom/node x) node
+             :else x)
+       x))
+   actions))
+
+(defn- enrich-action-from-state [state action]
+  (walk/postwalk
+   (fn [x]
+     (cond
+       (and (vector? x)
+            (= :db/get (first x))) (get state (second x))
+       :else x))
+   action))
 
 (defn- get-mark-all-as-state [items]
   (let [as-state (if (and (seq items)
@@ -26,44 +47,47 @@
       delete-item? (assoc :app/mark-all-state (not (get-mark-all-as-state (:app/todo-items state))))
       :always (dissoc :edit/editing-item-index :edit/keyup-code))))
 
-(defn handle-action [state _replicant-data action]
-  (match action
-    [:app/ax.mark-all-items-as completed?]
-    {:new-state (update state :app/todo-items mark-items-as completed?)}
+(defn handle-action [state replicant-data action]
+  (let [enriched-action (->> action
+                             (enrich-action-from-replicant-data replicant-data)
+                             (enrich-action-from-state state))]
+    (match enriched-action
+      [:app/ax.mark-all-items-as completed?]
+      {:new-state (update state :app/todo-items mark-items-as completed?)}
 
-    [:app/ax.set-mark-all-state]
-    {:new-state (let [items (:app/todo-items state)]
-                  (assoc state :app/mark-all-state (not (get-mark-all-as-state items))))}
+      [:app/ax.set-mark-all-state]
+      {:new-state (let [items (:app/todo-items state)]
+                    (assoc state :app/mark-all-state (not (get-mark-all-as-state items))))}
 
-    [:console/ax.debug & args]
-    {:effects [(into [:console/fx.debug] args)]}
+      [:console/ax.debug & args]
+      {:effects [(into [:console/fx.debug] args)]}
 
-    [:db/ax.assoc & args]
-    {:new-state (apply assoc state args)}
+      [:db/ax.assoc & args]
+      {:new-state (apply assoc state args)}
 
-    [:db/ax.assoc-in path v]
-    {:new-state (assoc-in state path v)}
+      [:db/ax.assoc-in path v]
+      {:new-state (assoc-in state path v)}
 
-    [:db/ax.dissoc & args]
-    {:new-state (apply dissoc state args)}
+      [:db/ax.dissoc & args]
+      {:new-state (apply dissoc state args)}
 
-    [:db/ax.update k f & args]
-    {:new-state (apply update state k f args)}
+      [:db/ax.update k f & args]
+      {:new-state (apply update state k f args)}
 
-    [:db/ax.update-in path & args]
-    {:new-state (apply update-in state path args)}
+      [:db/ax.update-in path & args]
+      {:new-state (apply update-in state path args)}
 
-    [:dom/ax.focus-element element]
-    {:effects [[:dom/fx.focus-element element]]}
+      [:dom/ax.focus-element element]
+      {:effects [[:dom/fx.focus-element element]]}
 
-    [:dom/ax.prevent-default]
-    {:effects [[:dom/fx.prevent-default]]}
+      [:dom/ax.prevent-default]
+      {:effects [[:dom/fx.prevent-default]]}
 
-    [:dom/ax.set-input-text element text]
-    {:effects [[:dom/fx.set-input-text element text]]}
+      [:dom/ax.set-input-text element text]
+      {:effects [[:dom/fx.set-input-text element text]]}
 
-    [:edit/ax.end-editing draft index]
-    {:new-state (end-editing state (:edit/keyup-code state) draft index)}))
+      [:edit/ax.end-editing draft index]
+      {:new-state (end-editing state (:edit/keyup-code state) draft index)})))
 
 (defn perform-effect! [{:keys [^js replicant/js-event]} effect]
   (match effect
