@@ -24,7 +24,9 @@
                  [:g.x {:id "h"
                         :i :j}
                   [:k {:l [[1 2 3]
-                           [4 5 6]]}]]])
+                           [4 5 6]]}]]
+                 [:m {:n [[7 8 9]
+                          [10 11 12]]}]])
 
   (l/select '[a b] haystack)
   ;;=> ([:b {:class #{"x"}, :c {:d :e}} [:f]])
@@ -46,4 +48,18 @@
   ;;=> ([[1 2 3] [4 5 6]])
   (collect-attributes [['[g#h k] [:l]]] haystack)
   ;;=> [[[1 2 3] [4 5 6]]]
+
+  (l/select 'm haystack)
+  ;;=> ([:m {:n [[7 8 9] [10 11 12]]}])
+  (select-attribute 'm [:n] haystack)
+  ;;=> ([[7 8 9] [10 11 12]])
+  (collect-attributes [['m [:n]]] haystack)
+  ;;=> [[[7 8 9] [10 11 12]]]
+
+  (collect-attributes [['[g#h k] [:l]]
+                       ['m       [:n]]] haystack)
+  ;;=> [[[1 2 3]
+  ;;     [4 5 6]]
+  ;;    [[7 8 9]
+  ;;     [10 11 12]]]
   :rcf)
