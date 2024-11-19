@@ -3,7 +3,7 @@
    [clojure.test :refer [deftest is testing]]
    [todomvc.hiccup-attributes :as sut]))
 
-(deftest test-select-attribute
+(deftest select-attribute
   (testing "it finds attributes given a selector and an attributes path"
     (is (= (sut/select-attribute '[a d.e] [:f] [:a
                                                 [:b]
@@ -52,15 +52,42 @@
                                           [:b]
                                           [:c {:d :e}]])))))
 
-(deftest test-collect-actions
+(def haystack [:a
+               [:b.x {:c {:d :e}}
+                [:f]]
+               [:g.x {:id "h"
+                      :i :j}
+                [:k {:l [[1 2 3]
+                         [4 5 6]]}]]
+               [:m {:n [[7 8 9]
+                        [10 11 12]]}]])
+
+(deftest collect-attributes
   (testing "it collects all attributes for the selector-paths"
-    (is (= '(:e {:id "h" :i :j})
+    (is (= '(:e {:class #{"x"} :id "h" :i :j})
            (sut/collect-attributes [['[a b] [:c :d]]
                                     ['[a g#h] []]]
-                                   [:a
-                                    [:b {:c {:d :e}}
-                                     [:f]]
-                                    [:g {:id "h"
-                                         :i :j}
-                                     [:k]]])))))
+                                   haystack)))
 
+    (is (= [:e]
+           (sut/collect-attributes [['[a b] [:c :d]]]
+                                   haystack)))
+
+    (is (= [{:class #{"x"}, :id "h", :i :j}]
+           (sut/collect-attributes [['[a g#h] []]]
+                                   haystack)))
+
+    (is (= [[[1 2 3] [4 5 6]]]
+           (sut/collect-attributes [['[g#h k] [:l]]]
+                                   haystack)))
+
+    (is (= [[[1 2 3] [4 5 6]] [[7 8 9] [10 11 12]]]
+           (sut/collect-attributes [['[g#h k] [:l]]
+                                    ['m [:n]]]
+                                   haystack)))
+
+    (is (= [:e [[1 2 3] [4 5 6]] [[7 8 9] [10 11 12]]]
+           (sut/collect-attributes [['[a b] [:c :d]]
+                                    ['[g#h k] [:l]]
+                                    ['m [:n]]]
+                                   haystack)))))
