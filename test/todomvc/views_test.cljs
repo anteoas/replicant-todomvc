@@ -153,6 +153,62 @@
                         (set effects))
                   "the input element remains blank"))))))))
 
+#_{:clj-kondo/ignore [:private-call]}
+(deftest edit-view
+  (testing "edit-view on mount"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-mount-actions (->> (sut/edit-view initial-state {:index 0})
+                                (select-actions :input.edit [:replicant/on-mount]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {:replicant/node :input-dom-node}
+                                                      on-mount-actions)]
+      (is (some #{[:dom/fx.focus-element :input-dom-node]}
+                (set effects))
+          "it focuses the input element")
+      (is (= initial-state
+             new-state)
+          "it does not modify the state")))
+
+  (testing "it updates the draft from the input event"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-input-actions (->> (sut/edit-view initial-state {:index 0})
+                                (select-actions :input.edit [:on :input]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {:replicant/js-event (clj->js {:target {:value "Input"}})}
+                                                      on-input-actions)]
+      (is (= "Input"
+             (:edit/draft new-state))
+          "it updates the draft")
+      (is (empty? effects)
+          "it does so without other side-effects")))
+
+  (testing "it saves the keycode to the state on keyup"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-keyup-actions (->> (sut/edit-view initial-state {:index 0})
+                                (select-actions :input.edit [:on :keyup]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {:replicant/js-event (clj->js {:code "Escape"})}
+                                                      on-keyup-actions)]
+      (is (= "Escape"
+             (:edit/keyup-code new-state))
+          "it saves the keycode")
+      (is (empty? effects)
+          "it does so without other side-effects")))
+
+  (testing "it removes the editing index on blur"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-blur-actions (->> (sut/edit-view initial-state {:index 0})
+                               (select-actions :input.edit [:on :blur]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {}
+                                                      on-blur-actions)]
+      on-blur-actions
+      (is (nil?
+           (:edit/editing-item-index new-state))
+          "it removes the editing index")
+      (is (empty? effects)
+          "it does so without other side-effects"))))
+
 (deftest app-view
   (testing "it shows a `.todoapp` element"
     (is (seq (l/select '.todoapp (sut/app-view {})))))
