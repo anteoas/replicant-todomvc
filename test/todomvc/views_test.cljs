@@ -35,22 +35,25 @@
   (reduce into [] actionss))
 
 (defn handle-actions [state replicant-data actions]
-  (reduce (fn [{state :new-state :keys [effects] :as acc} action]
+  (reduce (fn [{state :new-state :as acc} action]
             (let [{:keys [new-state new-effects]} (a/handle-action state replicant-data action)]
-              {:new-state new-state
-               :effects (concat effects new-effects)}))
+              (cond-> acc
+                new-state (assoc :new-state new-state)
+                new-effects (update :effects concat new-effects))))
           {:new-state state
            :effects []}
           actions))
 
 #_{:clj-kondo/ignore [:private-call]}
 (comment
-  (->> (ha/collect-attributes [['input.new-todo [:replicant/on-mount]]
-                               ['input.new-todo [:on :input]]
-                               ['form [:on :submit]]]
-                              (sut/add-view {:add/draft "New item"}))
+  (->> (ha/select-attribute 'input.new-todo [:replicant/on-mount]
+                            (sut/add-view {:add/draft "New item"}))
        flatten-actions
-       (handle-actions {} (clj->js {:event {:target {:value "New item"}}})))
+       (handle-actions {} {:replicant/js-event (clj->js {:event {:target {:value "New item"}}})
+                           :replicant/node :input-dom-node}))
+  [[]
+   ['input.new-todo [:on :input]]
+   ['form [:on :submit]]]
   :rcf)
 
 #_{:clj-kondo/ignore [:private-call]}
@@ -64,9 +67,8 @@
 
   (testing "it saves draft input element on mount"
     (let [on-mount-actions (->> (sut/add-view {:add/draft "New item"})
-                                (ha/collect-attributes [['input.new-todo [:replicant/on-mount]]])
-                                flatten-actions)
-          ]
+                                (ha/select-attribute :input.new-todo [:replicant/on-mount])
+                                flatten-actions)]
       (is (some #{[:db/ax.assoc :add/draft-input-element :dom/node]}
                 on-mount-actions)))))
 
