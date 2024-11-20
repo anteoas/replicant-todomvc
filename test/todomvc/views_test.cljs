@@ -2,7 +2,8 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [lookup.core :as l]
-   [todomvc.hiccup-attributes :as ha]
+   [todomvc.actions :as a]
+   [pez.hiccup-attributes :as ha]
    [todomvc.views :as sut]))
 
 #_{:clj-kondo/ignore [:private-call]}
@@ -30,6 +31,28 @@
                              second
                              :item/title)))))
 
+(defn flatten-actions [actionss]
+  (reduce into [] actionss))
+
+(defn handle-actions [state replicant-data actions]
+  (reduce (fn [{state :new-state :keys [effects] :as acc} action]
+            (let [{:keys [new-state new-effects]} (a/handle-action state replicant-data action)]
+              {:new-state new-state
+               :effects (concat effects new-effects)}))
+          {:new-state state
+           :effects []}
+          actions))
+
+#_{:clj-kondo/ignore [:private-call]}
+(comment
+  (->> (ha/collect-attributes [['input.new-todo [:replicant/on-mount]]
+                               ['input.new-todo [:on :input]]
+                               ['form [:on :submit]]]
+                              (sut/add-view {:add/draft "New item"}))
+       flatten-actions
+       (handle-actions {} (clj->js {:event {:target {:value "New item"}}})))
+  :rcf)
+
 #_{:clj-kondo/ignore [:private-call]}
 (deftest add-view
   (testing "its form-submit has a prevent-default effect"
@@ -37,7 +60,15 @@
               (->> (sut/add-view {:add/draft "New item"})
                    (ha/select-attribute 'form [:on :submit])
                    first
-                   set)))))
+                   set))))
+
+  (testing "it saves draft input element on mount"
+    (let [on-mount-actions (->> (sut/add-view {:add/draft "New item"})
+                                (ha/collect-attributes [['input.new-todo [:replicant/on-mount]]])
+                                flatten-actions)
+          ]
+      (is (some #{[:db/ax.assoc :add/draft-input-element :dom/node]}
+                on-mount-actions)))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"
