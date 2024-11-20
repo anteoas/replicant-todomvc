@@ -56,20 +56,10 @@
           actions))
 
 #_{:clj-kondo/ignore [:private-call]}
-(comment
-  (->> (select-actions 'input.new-todo [:replicant/on-mount]
-                       (sut/add-view {:add/draft "New item"}))
-       (handle-actions {} {:replicant/js-event (clj->js {:event {:target {:value "New item"}}})
-                           :replicant/node :input-dom-node}))
-
-  (->> (select-actions :form [:on :submit]
-        (sut/add-view {:add/draft "New item"}))
-       (handle-actions {:add/draft-input-element :input-dom-node} {}))
-
-  :rcf)
-
-#_{:clj-kondo/ignore [:private-call]}
 (defn test-add-view-mount [state]
+  #_{:clj-kondo/ignore [:inline-def :clojure-lsp/unused-public-var]}
+  (comment
+    (def state {}))
   (let [on-mount-actions (->> (sut/add-view state)
                               (select-actions :input.new-todo [:replicant/on-mount]))
         {:keys [new-state effects] :as result} (handle-actions state
@@ -83,11 +73,15 @@
 
 #_{:clj-kondo/ignore [:private-call]}
 (defn test-add-view-input [state add-text]
+  #_{:clj-kondo/ignore [:inline-def :clojure-lsp/unused-public-var]}
+  (comment
+    (def state {:add/draft-input-element :input-dom-node})
+    (def add-text "Input"))
   (let [on-input-actions (->> (sut/add-view state)
                               (select-actions :input.new-todo [:on :input]))
         {:keys [new-state effects] :as result} (handle-actions state
-                                                    {:replicant/js-event (clj->js {:target {:value add-text}})}
-                                                    on-input-actions)]
+                                                               {:replicant/js-event (clj->js {:target {:value add-text}})}
+                                                               on-input-actions)]
     (is (= add-text
            (:add/draft new-state)))
     (is (empty? effects)
@@ -100,16 +94,16 @@
     (let [{:keys [new-state]} (test-add-view-mount {})]
 
       (testing "it updates the draft from the `.new-todo` input event"
-        (let [add-text "Added text"
-              {:keys [new-state]} (test-add-view-input new-state add-text)]
+        (let [input-text "Input"
+              {:keys [new-state]} (test-add-view-input new-state input-text)]
 
-          (testing "it updates todo items on the form submit event"
+          (testing "it handles the form submit event"
             (let [on-submit-actions (->> (sut/add-view new-state)
                                          (select-actions :form [:on :submit]))
                   {:keys [new-state effects]} (handle-actions new-state
                                                               {}
                                                               on-submit-actions)]
-              (is (= add-text
+              (is (= input-text
                      (-> new-state :app/todo-items first :item/title))
                   "it adds the new item to the todo items")
               (is (= ""
@@ -120,7 +114,44 @@
                   "it prevents the default form submit action")
               (is (some #{[:dom/fx.set-input-text :input-dom-node ""]}
                         (set effects))
-                  "it clears the input element"))))))))
+                  "it clears the input element")))))
+
+      (testing "it trims the input"
+        (let [input-text "Input"
+              untrimmed-test (str "  " input-text "  ")
+              {:keys [new-state]} (test-add-view-input new-state untrimmed-test)]
+
+          (testing "it handles the form submit event"
+            (let [on-submit-actions (->> (sut/add-view new-state)
+                                         (select-actions :form [:on :submit]))
+                  {:keys [new-state]} (handle-actions new-state
+                                                      {}
+                                                      on-submit-actions)]
+              (is (= input-text
+                     (-> new-state :app/todo-items first :item/title))
+                  "it adds the new item with trimmed text to the todo items")))))
+
+      (testing "it doesn't add an item when the input is empty"
+        (let [input-text ""
+              {:keys [new-state]} (test-add-view-input new-state input-text)]
+
+          (testing "it handles the form submit event"
+            (let [on-submit-actions (->> (sut/add-view new-state)
+                                         (select-actions :form [:on :submit]))
+                  {:keys [new-state effects]} (handle-actions new-state
+                                                              {}
+                                                              on-submit-actions)]
+              (is (empty? (:app/todo-items new-state))
+                  "it does not add a new item to the todo items")
+              (is (= ""
+                     (:add/draft new-state))
+                  "it clears the draft")
+              (is (some #{[:dom/fx.prevent-default]}
+                        (set effects))
+                  "it prevents the default form submit action")
+              (is (some #{[:dom/fx.set-input-text :input-dom-node ""]}
+                        (set effects))
+                  "the input element remains blank"))))))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"
