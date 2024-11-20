@@ -47,10 +47,10 @@
 
 (defn- handle-actions [state replicant-data actions]
   (reduce (fn [{state :new-state :as acc} action]
-            (let [{:keys [new-state new-effects]} (a/handle-action state replicant-data action)]
+            (let [{:keys [new-state effects]} (a/handle-action state replicant-data action)]
               (cond-> acc
                 new-state (assoc :new-state new-state)
-                new-effects (update :effects concat new-effects))))
+                effects (update :effects into effects))))
           {:new-state state
            :effects []}
           actions))
@@ -61,23 +61,26 @@
                        (sut/add-view {:add/draft "New item"}))
        (handle-actions {} {:replicant/js-event (clj->js {:event {:target {:value "New item"}}})
                            :replicant/node :input-dom-node}))
-  [[]
-   ['input.new-todo [:on :input]]
-   ['form [:on :submit]]]
+
+  (->> (select-actions :form [:on :submit]
+        (sut/add-view {:add/draft "New item"}))
+       (handle-actions {:add/draft-input-element :input-dom-node} {}))
+
   :rcf)
 
 #_{:clj-kondo/ignore [:private-call]}
 (deftest add-view
-  (testing "its form-submit has a prevent-default effect"
+  (testing "its form-submit has a prevent-default action"
     (is (some #{[:dom/ax.prevent-default]}
               (->> (sut/add-view {:add/draft "New item"})
                    (select-actions 'form [:on :submit])
                    set))))
 
   (testing "it saves draft input element on mount"
-    (let [on-mount-actions (->> (sut/add-view {:add/draft "New item"})
+    (let [state {:add/draft "New item"}
+          on-mount-actions (->> (sut/add-view state)
                                 (select-actions :input.new-todo [:replicant/on-mount]))
-          {:keys [new-state effects]} (handle-actions {}
+          {:keys [new-state effects]} (handle-actions state
                                                       {:replicant/node :input-dom-node}
                                                       on-mount-actions)]
       (is (= :input-dom-node
@@ -86,15 +89,38 @@
           "it does so without other side-effects")))
 
   (testing "it updates the draft from the `.new-todo` input event"
-    (let [on-input-actions (->> (sut/add-view {})
+    (let [state {}
+          on-input-actions (->> (sut/add-view state)
                                 (select-actions :input.new-todo [:on :input]))
-          {:keys [new-state effects]} (handle-actions {}
+          {:keys [new-state effects]} (handle-actions state
                                                       {:replicant/js-event (clj->js {:target {:value "New text"}})}
                                                       on-input-actions)]
       (is (= "New text"
              (:add/draft new-state)))
       (is (empty? effects)
-          "it does so without other side-effects"))))
+          "it does so without other side-effects")))
+
+  (testing "it updates todo items on the form submit event"
+    (let [state {:add/draft "New item"
+                 :add/draft-input-element :input-dom-node}
+          on-submit-actions (->> (sut/add-view state)
+                                 (select-actions :form [:on :submit]))
+          {:keys [new-state effects]} (handle-actions state
+                                                      {}
+                                                      on-submit-actions)]
+      [new-state effects]
+      (is (= "New item"
+             (-> new-state :app/todo-items first :item/title))
+          "the new item is added to the todo items")
+      (is (= ""
+             (:add/draft new-state))
+          "the draft is cleared")
+      (is (some #{[:dom/fx.prevent-default]}
+                (set effects))
+          "It prevents the default form submit action")
+      (is (some #{[:dom/fx.set-input-text :input-dom-node ""]}
+                (set effects))
+          "It clears the input element"))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"
@@ -129,7 +155,7 @@
     (is (seq (l/select '[.todoapp .footer] (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
         "it has a `.footer` when there are items"))
 
-  (testing "all form-submits have a prevent-default effect"
+  (testing "all form-submits have a prevent-default action"
     (is (every? (partial some #{[:dom/ax.prevent-default]})
                 (->> (sut/app-view {:app/todo-items [{:item/title "First item"}]
                                     :edit/editing-item-index 0
