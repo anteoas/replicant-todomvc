@@ -41,6 +41,10 @@
 (defn- flatten-actions [actionss]
   (reduce into [] actionss))
 
+(defn- select-actions [selector path data]
+  (->> (select-attribute selector path data)
+       flatten-actions))
+
 (defn- handle-actions [state replicant-data actions]
   (reduce (fn [{state :new-state :as acc} action]
             (let [{:keys [new-state new-effects]} (a/handle-action state replicant-data action)]
@@ -53,9 +57,8 @@
 
 #_{:clj-kondo/ignore [:private-call]}
 (comment
-  (->> (select-attribute 'input.new-todo [:replicant/on-mount]
-                            (sut/add-view {:add/draft "New item"}))
-       flatten-actions
+  (->> (select-actions 'input.new-todo [:replicant/on-mount]
+                       (sut/add-view {:add/draft "New item"}))
        (handle-actions {} {:replicant/js-event (clj->js {:event {:target {:value "New item"}}})
                            :replicant/node :input-dom-node}))
   [[]
@@ -68,14 +71,12 @@
   (testing "its form-submit has a prevent-default effect"
     (is (some #{[:dom/ax.prevent-default]}
               (->> (sut/add-view {:add/draft "New item"})
-                   (select-attribute 'form [:on :submit])
-                   first
+                   (select-actions 'form [:on :submit])
                    set))))
 
   (testing "it saves draft input element on mount"
     (let [on-mount-actions (->> (sut/add-view {:add/draft "New item"})
-                                (select-attribute :input.new-todo [:replicant/on-mount])
-                                flatten-actions)
+                                (select-actions :input.new-todo [:replicant/on-mount]))
           {:keys [new-state effects]} (handle-actions {}
                                                       {:replicant/node :input-dom-node}
                                                       on-mount-actions)]
