@@ -3,7 +3,8 @@
    [clojure.test :refer [deftest is testing]]
    [lookup.core :as l]
    [todomvc.actions :as a]
-   [todomvc.views :as sut]))
+   [todomvc.views :as sut]
+   [clojure.string :as string]))
 
 #_{:clj-kondo/ignore [:private-call]}
 (deftest maybe-add
@@ -152,6 +153,154 @@
               (is (some #{[:dom/fx.set-input-text :input-dom-node ""]}
                         (set effects))
                   "the input element remains blank"))))))))
+
+#_{:clj-kondo/ignore [:private-call]}
+(deftest edit-view
+  (testing "rendering the edit view"
+    (let [initial-state {:edit/editing-item-index 0}
+          edit-view (sut/edit-view initial-state {:index 0})]
+      (is (l/select :input.edit edit-view)
+          "it renders the edit view when the index matches the editing item index"))
+
+    (let [initial-state {}
+          edit-view (sut/edit-view initial-state {:index 0})]
+      (is (nil? edit-view)
+          "it does not render the edit view when its index does not match the editing item index"))
+
+    (let [initial-state  {:edit/editing-item-index 0
+                          :edit/keyup-code "Escape"}
+          edit-view (sut/edit-view initial-state {:index 0})]
+      (is (nil? edit-view)
+          "it does not render the edit view when the keycode is 'Escape'")))
+
+  (testing "edit-view on mount"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-mount-actions (->> (sut/edit-view initial-state {:index 0})
+                                (select-actions :input.edit [:replicant/on-mount]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {:replicant/node :input-dom-node}
+                                                      on-mount-actions)]
+      (is (some #{[:dom/fx.focus-element :input-dom-node]}
+                (set effects))
+          "it focuses the input element")
+      (is (= initial-state
+             new-state)
+          "it does not modify the state")))
+
+  (testing "it updates the draft from the input event"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-input-actions (->> (sut/edit-view initial-state {:index 0})
+                                (select-actions :input.edit [:on :input]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {:replicant/js-event (clj->js {:target {:value "Input"}})}
+                                                      on-input-actions)]
+      (is (= "Input"
+             (:edit/draft new-state))
+          "it updates the draft")
+      (is (empty? effects)
+          "it does so without other side-effects")))
+
+  (testing "it saves the keycode to the state on keyup"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-keyup-actions (->> (sut/edit-view initial-state {:index 0})
+                                (select-actions :input.edit [:on :keyup]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {:replicant/js-event (clj->js {:code "Escape"})}
+                                                      on-keyup-actions)]
+      (is (= "Escape"
+             (:edit/keyup-code new-state))
+          "it saves the keycode")
+      (is (empty? effects)
+          "it does so without other side-effects")))
+
+  (testing "it removes the editing index on blur"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-blur-actions (->> (sut/edit-view initial-state {:index 0})
+                               (select-actions :input.edit [:on :blur]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {}
+                                                      on-blur-actions)]
+      on-blur-actions
+      (is (nil?
+           (:edit/editing-item-index new-state))
+          "it removes the editing index")
+      (is (empty? effects)
+          "it does so without other side-effects")))
+
+  (testing "it removes the editing index on form submit"
+    (let [initial-state {:edit/editing-item-index 0}
+          on-submit-actions (->> (sut/edit-view initial-state {:index 0})
+                                (select-actions :form [:on :submit]))
+          {:keys [new-state effects]} (handle-actions initial-state
+                                                      {}
+                                                      on-submit-actions)]
+      (is (nil?
+           (:edit/editing-item-index new-state))
+          "it removes the editing index")
+      (is (some #{[:dom/fx.prevent-default]}
+                (set effects))
+          "it prevents the default form submission")))
+
+  (testing "end editing"
+    (doseq [[input behaviour] [["Input" "it updates the item title"]
+                               ["  Input  " "it trims the input"]]]
+      (let [initial-state {:edit/editing-item-index 0
+                           :edit/draft input
+                           :app/todo-items [{:item/title "Title"}]}
+            on-unmount-actions (->> (sut/edit-view initial-state {:index 0})
+                                    (select-actions :form [:replicant/on-unmount]))
+            {:keys [new-state effects]} (handle-actions initial-state
+                                                        {}
+                                                        on-unmount-actions)]
+        (is (= (string/trim input)
+               (-> new-state :app/todo-items first :item/title))
+            behaviour)
+        (is (nil? (:edit/editing-item-index new-state))
+            "it removes the editing index")
+        (is (nil? (:edit/keyup-code new-state))
+            "it removes the keycode")
+        (is (empty? effects)
+            "it does not have other side-effects")))
+
+    (doseq [[input input-behaviour] [["" "it removes the item if the input is empty"]
+                                     ["  " "it removes the item if the trimmed input is empty"]]
+            [items mark-all-state items-behaviour] [[[{:item/title "Title1"
+                                                       :item/completed false}
+                                                      {:item/title "Title2"
+                                                       :item/completed true}
+                                                      {:item/title "Title3"
+                                                       :item/completed false}]
+                                                     false
+                                                     "it sets the mark-all state to false if the remaining items are uncompleted"]
+                                                    [[{:item/title "Title1"
+                                                       :item/completed true}
+                                                      {:item/title "Title2"
+                                                       :item/completed false}
+                                                      {:item/title "Title3"
+                                                       :item/completed true}]
+                                                     true
+                                                     "it sets the mark-all state to true if the remaining items are completed"]]]
+      (let [initial-state {:edit/editing-item-index 1
+                           :edit/keyup-code "Enter"
+                           :edit/draft input
+                           :app/todo-items items}
+            on-unmount-actions (->> (sut/edit-view initial-state {:index 1})
+                                    (select-actions :form [:replicant/on-unmount]))
+            {:keys [new-state effects]} (handle-actions initial-state
+                                                        {}
+                                                        on-unmount-actions)]
+        (is (= [(first items) (last items)]
+             (:app/todo-items new-state))
+            input-behaviour)
+        (is (nil? (:edit/editing-item-index new-state))
+            "it removes the editing index")
+        (is (nil? (:edit/keyup-code new-state))
+            "it removes the keycode")
+        (is (empty? effects)
+            "it does not have other side-effects")
+        (is (= mark-all-state
+               (:app/mark-all-state new-state))
+            items-behaviour)))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"

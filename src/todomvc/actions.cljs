@@ -36,15 +36,17 @@
           (assoc item :item/completed completed?))
         items))
 
-(defn- end-editing [state keyup-code draft index]
+(defn- end-editing [{:keys [app/todo-items] :as state} keyup-code draft index]
   (let [trimmed (string/trim draft)
         save-edit? (and (not (string/blank? trimmed))
                         (not= "Escape" keyup-code))
-        delete-item? (string/blank? trimmed)]
+        delete-item? (string/blank? trimmed)
+        new-items (when delete-item?
+                    (util/remove-nth index todo-items))]
     (cond-> state
       save-edit? (assoc-in [:app/todo-items index :item/title] trimmed)
-      delete-item? (update :app/todo-items (partial util/remove-nth index))
-      delete-item? (assoc :app/mark-all-state (not (get-mark-all-as-state (:app/todo-items state))))
+      delete-item? (assoc :app/todo-items new-items)
+      delete-item? (assoc :app/mark-all-state (not (get-mark-all-as-state new-items)))
       :always (dissoc :edit/editing-item-index :edit/keyup-code))))
 
 (defn handle-action [state replicant-data action]
