@@ -83,6 +83,17 @@
       (is (= :input-dom-node
              (:add/draft-input-element new-state)))
       (is (empty? effects)
+          "it does so without other side-effects")))
+
+  (testing "it updates the draft from the `.new-todo` input event"
+    (let [on-input-actions (->> (sut/add-view {})
+                                (select-actions :input.new-todo [:on :input]))
+          {:keys [new-state effects]} (handle-actions {}
+                                                      {:replicant/js-event (clj->js {:target {:value "New text"}})}
+                                                      on-input-actions)]
+      (is (= "New text"
+             (:add/draft new-state)))
+      (is (empty? effects)
           "it does so without other side-effects"))))
 
 (deftest app-view
