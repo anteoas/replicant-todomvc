@@ -6,15 +6,18 @@
 (deftest get-mark-all-as-state
   (testing "false when all items are completed"
     (is (false? (sut/get-mark-all-as-state [{:item/completed true}
+                                            {:item/completed true}
                                             {:item/completed true}]))))
 
   (testing "true when no items are completed"
     (is (true? (sut/get-mark-all-as-state [{:item/completed false}
+                                           {:item/completed false}
                                            {:item/completed false}]))))
 
   (testing "true when some items are completed"
     (is (true? (sut/get-mark-all-as-state [{:item/completed true}
-                                           {:item/completed false}]))))
+                                           {:item/completed false}
+                                           {:item/completed true}]))))
 
   (testing "true when items list is empty"
     (is (true? (sut/get-mark-all-as-state [])))))
@@ -152,11 +155,11 @@
   (testing "should update mark-all state if the item is removed"
     (let [initial-state {:app/todo-items [{:item/title "delete me"
                                            :item/completed true}]
-                         :app/mark-all-state false}]
+                         :app/mark-all-state true}]
       (is (= {:new-state {:app/todo-items []
-                          :app/mark-all-state true}}
+                          :app/mark-all-state false}}
              (sut/handle-action initial-state {} [:edit/ax.end-editing "" 0]))
-          "should set mark-all state to `true` if the last item is removed"))
+          "should set mark-all state to `false` if the last item is removed"))
     (let [initial-state {:app/todo-items [{:item/title "delete me"
                                            :item/completed true}
                                           {:item/completed false}]
