@@ -1,7 +1,7 @@
-(ns todomvc.hiccup-attributes-test
+(ns pez.hiccup-attributes-test
   (:require
    [clojure.test :refer [deftest is testing]]
-   [todomvc.hiccup-attributes :as sut]))
+   [pez.hiccup-attributes :as sut]))
 
 (deftest select-attribute
   (testing "it finds attributes given a selector and an attributes path"

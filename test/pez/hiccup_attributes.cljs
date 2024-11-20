@@ -1,4 +1,4 @@
-(ns todomvc.hiccup-attributes
+(ns pez.hiccup-attributes
   (:require [lookup.core :as l]))
 
 (defn select-attribute
