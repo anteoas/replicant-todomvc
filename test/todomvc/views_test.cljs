@@ -3,7 +3,6 @@
    [clojure.test :refer [deftest is testing]]
    [lookup.core :as l]
    [todomvc.actions :as a]
-   [pez.hiccup-attributes :as ha]
    [todomvc.views :as sut]))
 
 #_{:clj-kondo/ignore [:private-call]}
@@ -31,10 +30,18 @@
                              second
                              :item/title)))))
 
-(defn flatten-actions [actionss]
+(defn- select-attribute
+  [selector path data]
+  (let [elements (l/select selector data)]
+    (->> (keep (fn [element]
+                 (when (map? (second element))
+                   (get-in (second element) path)))
+               elements))))
+
+(defn- flatten-actions [actionss]
   (reduce into [] actionss))
 
-(defn handle-actions [state replicant-data actions]
+(defn- handle-actions [state replicant-data actions]
   (reduce (fn [{state :new-state :as acc} action]
             (let [{:keys [new-state new-effects]} (a/handle-action state replicant-data action)]
               (cond-> acc
@@ -46,7 +53,7 @@
 
 #_{:clj-kondo/ignore [:private-call]}
 (comment
-  (->> (ha/select-attribute 'input.new-todo [:replicant/on-mount]
+  (->> (select-attribute 'input.new-todo [:replicant/on-mount]
                             (sut/add-view {:add/draft "New item"}))
        flatten-actions
        (handle-actions {} {:replicant/js-event (clj->js {:event {:target {:value "New item"}}})
@@ -61,13 +68,13 @@
   (testing "its form-submit has a prevent-default effect"
     (is (some #{[:dom/ax.prevent-default]}
               (->> (sut/add-view {:add/draft "New item"})
-                   (ha/select-attribute 'form [:on :submit])
+                   (select-attribute 'form [:on :submit])
                    first
                    set))))
 
   (testing "it saves draft input element on mount"
     (let [on-mount-actions (->> (sut/add-view {:add/draft "New item"})
-                                (ha/select-attribute :input.new-todo [:replicant/on-mount])
+                                (select-attribute :input.new-todo [:replicant/on-mount])
                                 flatten-actions)]
       (is (some #{[:db/ax.assoc :add/draft-input-element :dom/node]}
                 on-mount-actions)))))
@@ -82,13 +89,13 @@
 
   (testing "the `.todoapp` element contains an autofocused `.new-todo` input in the `.header` element"
     (is (= '(true)
-           (ha/select-attribute '[.todoapp .header input.new-todo]
+           (select-attribute '[.todoapp .header input.new-todo]
                                 [:autofocus]
                                 (sut/app-view {})))
         "with an empty app state")
 
     (is (= '(true)
-           (ha/select-attribute '[.todoapp .header input.new-todo]
+           (select-attribute '[.todoapp .header input.new-todo]
                                 [:autofocus]
                                 (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
         "with items in the app state"))
@@ -110,5 +117,5 @@
                 (->> (sut/app-view {:app/todo-items [{:item/title "First item"}]
                                     :edit/editing-item-index 0
                                     :app/item-filter :filter/all})
-                     (ha/select-attribute 'form [:on :submit])
+                     (select-attribute 'form [:on :submit])
                      (map set))))))
