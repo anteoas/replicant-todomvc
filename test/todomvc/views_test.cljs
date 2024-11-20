@@ -69,30 +69,39 @@
   :rcf)
 
 #_{:clj-kondo/ignore [:private-call]}
-(deftest test-add-view
+(defn test-add-view-mount [state]
+  (let [on-mount-actions (->> (sut/add-view state)
+                              (select-actions :input.new-todo [:replicant/on-mount]))
+        {:keys [new-state effects] :as result} (handle-actions state
+                                                               {:replicant/node :input-dom-node}
+                                                               on-mount-actions)]
+    (is (= :input-dom-node
+           (:add/draft-input-element new-state)))
+    (is (empty? effects)
+        "it does so without other side-effects")
+    result))
+
+#_{:clj-kondo/ignore [:private-call]}
+(defn test-add-view-input [state add-text]
+  (let [on-input-actions (->> (sut/add-view state)
+                              (select-actions :input.new-todo [:on :input]))
+        {:keys [new-state effects] :as result} (handle-actions state
+                                                    {:replicant/js-event (clj->js {:target {:value add-text}})}
+                                                    on-input-actions)]
+    (is (= add-text
+           (:add/draft new-state)))
+    (is (empty? effects)
+        "it does so without other side-effects")
+    result))
+
+#_{:clj-kondo/ignore [:private-call]}
+(deftest add-view
   (testing "it saves draft input element on mount"
-    (let [added-text "Added text"
-          state {}
-          on-mount-actions (->> (sut/add-view state)
-                                (select-actions :input.new-todo [:replicant/on-mount]))
-          {:keys [new-state effects]} (handle-actions state
-                                                      {:replicant/node :input-dom-node}
-                                                      on-mount-actions)]
-      (is (= :input-dom-node
-             (:add/draft-input-element new-state)))
-      (is (empty? effects)
-          "it does so without other side-effects")
+    (let [{:keys [new-state]} (test-add-view-mount {})]
 
       (testing "it updates the draft from the `.new-todo` input event"
-        (let [on-input-actions (->> (sut/add-view new-state)
-                                    (select-actions :input.new-todo [:on :input]))
-              {:keys [new-state effects]} (handle-actions new-state
-                                                          {:replicant/js-event (clj->js {:target {:value added-text}})}
-                                                          on-input-actions)]
-          (is (= added-text
-                 (:add/draft new-state)))
-          (is (empty? effects)
-              "it does so without other side-effects")
+        (let [add-text "Added text"
+              {:keys [new-state]} (test-add-view-input new-state add-text)]
 
           (testing "it updates todo items on the form submit event"
             (let [on-submit-actions (->> (sut/add-view new-state)
@@ -100,7 +109,7 @@
                   {:keys [new-state effects]} (handle-actions new-state
                                                               {}
                                                               on-submit-actions)]
-              (is (= added-text
+              (is (= add-text
                      (-> new-state :app/todo-items first :item/title))
                   "it adds the new item to the todo items")
               (is (= ""
