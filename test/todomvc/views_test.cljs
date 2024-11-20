@@ -155,6 +155,23 @@
 
 #_{:clj-kondo/ignore [:private-call]}
 (deftest edit-view
+  (testing "rendering the edit view"
+    (let [initial-state {:edit/editing-item-index 0}
+          edit-view (sut/edit-view initial-state {:index 0})]
+      (is (l/select :input.edit edit-view)
+          "it renders the edit view when the index matches the editing item index"))
+
+    (let [initial-state {}
+          edit-view (sut/edit-view initial-state {:index 0})]
+      (is (nil? edit-view)
+          "it does not render the edit view when its index does not match the editing item index"))
+
+    (let [initial-state  {:edit/editing-item-index 0
+                          :edit/keyup-code "Escape"}
+          edit-view (sut/edit-view initial-state {:index 0})]
+      (is (nil? edit-view)
+          "it does not render the edit view when the keycode is 'Escape'")))
+
   (testing "edit-view on mount"
     (let [initial-state {:edit/editing-item-index 0}
           on-mount-actions (->> (sut/edit-view initial-state {:index 0})
