@@ -75,9 +75,14 @@
   (testing "it saves draft input element on mount"
     (let [on-mount-actions (->> (sut/add-view {:add/draft "New item"})
                                 (select-attribute :input.new-todo [:replicant/on-mount])
-                                flatten-actions)]
-      (is (some #{[:db/ax.assoc :add/draft-input-element :dom/node]}
-                on-mount-actions)))))
+                                flatten-actions)
+          {:keys [new-state effects]} (handle-actions {}
+                                                      {:replicant/node :input-dom-node}
+                                                      on-mount-actions)]
+      (is (= :input-dom-node
+             (:add/draft-input-element new-state)))
+      (is (empty? effects)
+          "it does so without other side-effects"))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"
