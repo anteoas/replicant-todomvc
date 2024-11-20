@@ -69,15 +69,10 @@
   :rcf)
 
 #_{:clj-kondo/ignore [:private-call]}
-(deftest add-view
-  (testing "its form-submit has a prevent-default action"
-    (is (some #{[:dom/ax.prevent-default]}
-              (->> (sut/add-view {:add/draft "New item"})
-                   (select-actions 'form [:on :submit])
-                   set))))
-
+(deftest test-add-view
   (testing "it saves draft input element on mount"
-    (let [state {:add/draft "New item"}
+    (let [added-text "Added text"
+          state {}
           on-mount-actions (->> (sut/add-view state)
                                 (select-actions :input.new-todo [:replicant/on-mount]))
           {:keys [new-state effects]} (handle-actions state
@@ -86,41 +81,37 @@
       (is (= :input-dom-node
              (:add/draft-input-element new-state)))
       (is (empty? effects)
-          "it does so without other side-effects")))
+          "it does so without other side-effects")
 
-  (testing "it updates the draft from the `.new-todo` input event"
-    (let [state {}
-          on-input-actions (->> (sut/add-view state)
-                                (select-actions :input.new-todo [:on :input]))
-          {:keys [new-state effects]} (handle-actions state
-                                                      {:replicant/js-event (clj->js {:target {:value "New text"}})}
-                                                      on-input-actions)]
-      (is (= "New text"
-             (:add/draft new-state)))
-      (is (empty? effects)
-          "it does so without other side-effects")))
+      (testing "it updates the draft from the `.new-todo` input event"
+        (let [on-input-actions (->> (sut/add-view new-state)
+                                    (select-actions :input.new-todo [:on :input]))
+              {:keys [new-state effects]} (handle-actions new-state
+                                                          {:replicant/js-event (clj->js {:target {:value added-text}})}
+                                                          on-input-actions)]
+          (is (= added-text
+                 (:add/draft new-state)))
+          (is (empty? effects)
+              "it does so without other side-effects")
 
-  (testing "it updates todo items on the form submit event"
-    (let [state {:add/draft "New item"
-                 :add/draft-input-element :input-dom-node}
-          on-submit-actions (->> (sut/add-view state)
-                                 (select-actions :form [:on :submit]))
-          {:keys [new-state effects]} (handle-actions state
-                                                      {}
-                                                      on-submit-actions)]
-      [new-state effects]
-      (is (= "New item"
-             (-> new-state :app/todo-items first :item/title))
-          "the new item is added to the todo items")
-      (is (= ""
-             (:add/draft new-state))
-          "the draft is cleared")
-      (is (some #{[:dom/fx.prevent-default]}
-                (set effects))
-          "It prevents the default form submit action")
-      (is (some #{[:dom/fx.set-input-text :input-dom-node ""]}
-                (set effects))
-          "It clears the input element"))))
+          (testing "it updates todo items on the form submit event"
+            (let [on-submit-actions (->> (sut/add-view new-state)
+                                         (select-actions :form [:on :submit]))
+                  {:keys [new-state effects]} (handle-actions new-state
+                                                              {}
+                                                              on-submit-actions)]
+              (is (= added-text
+                     (-> new-state :app/todo-items first :item/title))
+                  "it adds the new item to the todo items")
+              (is (= ""
+                     (:add/draft new-state))
+                  "it clears the draft")
+              (is (some #{[:dom/fx.prevent-default]}
+                        (set effects))
+                  "it prevents the default form submit action")
+              (is (some #{[:dom/fx.set-input-text :input-dom-node ""]}
+                        (set effects))
+                  "it clears the input element"))))))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"
