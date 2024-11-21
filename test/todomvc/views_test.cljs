@@ -290,7 +290,7 @@
                                                         {}
                                                         on-unmount-actions)]
         (is (= [(first items) (last items)]
-             (:app/todo-items new-state))
+               (:app/todo-items new-state))
             input-behaviour)
         (is (nil? (:edit/editing-item-index new-state))
             "it removes the editing index")
@@ -300,7 +300,47 @@
             "it does not have other side-effects")
         (is (= mark-all-state
                (:app/mark-all-state new-state))
-            items-behaviour)))))
+            items-behaviour)))
+
+    (testing "It does not update the item when Escape has been pressed"
+      ; Notes:
+      ; :app/mark-all-state
+      ;   * The initial states has no :app/mark-all-state key, even though in “reality” it would have
+      ;     We do this so that we can test that its not updated
+      ;
+      ; :edit/keyup-code and the element lifecycle
+      ;   * The state rendering the view had no `:edit/keyup-code "Escape"` entry,
+      ;     hence the edit UI was rendered
+      ;   * The state captured at unmounting the view _had_ an `:edit/keyup-code "Escape"` entry,
+      ;     and this should cause the indexed todo item to be left unchanged
+      (let [initial-items [{:item/title "Title1"
+                            :item/completed false}
+                           {:item/title "Title2"
+                            :item/completed true}
+                           {:item/title "Title3"
+                            :item/completed false}]
+
+            rendering-state {:edit/editing-item-index 1
+                             :edit/keyup-code "KeyT" ; Doesn't matter, but if the "t" in "Input" was typed last...
+                             :edit/draft "Input"
+                             :app/todo-items initial-items}
+            unmounting-state (assoc rendering-state :edit/keyup-code "Escape")
+            on-unmount-actions (->> (sut/edit-view rendering-state {:index 1})
+                                    (select-actions :form [:replicant/on-unmount]))
+            {:keys [new-state effects]} (handle-actions unmounting-state
+                                                        {}
+                                                        on-unmount-actions)]
+        (is (= initial-items
+               (:app/todo-items new-state))
+            "it doesn't update any item")
+        (is (nil? (:edit/editing-item-index new-state))
+            "it removes the editing index")
+        (is (nil? (:edit/keyup-code new-state))
+            "it removes the keycode")
+        (is (empty? effects)
+            "it does not have other side-effects")
+        (is (nil? (:app/mark-all-state new-state))
+            "it does not update the mark-all state")))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"
