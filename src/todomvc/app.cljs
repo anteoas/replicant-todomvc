@@ -6,11 +6,9 @@
             [todomvc.router :as router]
             [todomvc.views :as views]))
 
-(defonce el (js/document.getElementById "app"))
-
 (defn- render! [state]
   (r-dom/render
-   el
+   (js/document.getElementById "app")
    (views/app-view state)))
 
 (defn- event-handler [replicant-data actions]
