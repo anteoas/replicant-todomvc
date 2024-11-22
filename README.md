@@ -1,11 +1,12 @@
 # The Replicant TodoMVC Example
 
 An implementation of the [TodoMVC](http://todomvc.com) app using the [Replicant](https://github.com/cjohansen/replicant) library. You can try the app here:
+
 * https://anteoas.github.io/replicant-todomvc/
 
 ***Replicant***: _A native [ClojureScript](https://clojurescript.org) virtual DOM renderer - render hiccup directly_
 
-Replicant is a Clojure and ClojureScript library. Working with it has many similarities with React, but it is not using React and thus not depending on React and everything that React depends on. In fact Replicant has zero/zilch/no dependencies at all.
+Replicant is a [Clojure](https://clojure.org) and ClojureScript library. Working with it has many similarities with React, but it is not using React and thus not depending on React and everything that React depends on. In fact Replicant has zero/zilch/no dependencies.
 
 The example shows a way (of infinitely many) to wire up a Replicant app, with a focus on keeping the views as pure data. We can do this because replicant supports pure data DOM event handlers and VDOM lifecycle hooks.
 
@@ -17,7 +18,7 @@ To understand a bit of where Replicant comes from, please watch Christian Johans
 
 As stated above, Replicant is a library. It is _not a framework_. It only concerns itself with rendering to the DOM (from its own variant of [Hiccup](https://github.com/weavejester/hiccup)), implementing a very efficient virtual DOM. While rendering, Replicant helps with dispatching DOM events and lifecycle hooks to the app. The app needs to implement an event handler. From there, Replicant has no further requirements. You can say that Replicant is satisfied with requiring you to work in functional and data-oriented way.
 
-When dispatching events, Replicant allows to dispatch data instead of functions. It allows functions too, but we are using the data oriented approach in this app. This keeps our views not only pure functions, but also fully serializable. We arrange the data from the events in vectors of `actions`, where each `action` also is a vector, with the first element being the action name, and the rest is action arguments.
+When dispatching events, Replicant allows to dispatch data instead of functions. It allows functions too, but we are using the data oriented approach in this app. This keeps our views not only pure functions, but also fully serializable, and [very testable](#testing). We arrange the data from the events in vectors of `actions`, where each `action` also is a vector, with the first element being the action name, and the rest is action arguments.
 
 ### The app state
 
@@ -65,7 +66,7 @@ Replicant calls the top view with the app state, and that view then calls all th
 
 ### Routing
 
-We use [Reitit](https://github.com/metosin/reitit) for routing. The route table is pure data, and the router dipatches `actions` (pure data, remember?) for our event handler.
+We use [Reitit](https://github.com/metosin/reitit) for routing. The route table is pure data, and the router dipatches `actions` (pure data, remember?) on our event handler.
 
 ### Side effects
 
@@ -73,9 +74,43 @@ Counting rendering as a side effect, the app is side-effecting as part of the ap
 
 From a business rules perspective, the only side effects happen in the event handler.
 
+### Testing
+
+Since the side effects are “pushed” out to the edges of the application, we can unit test most anything in the app, including:
+
+* Some of the event handling framework
+* Business rules functions
+* The action handlers
+  * We can't easily unit test the effect handlers, but we can test that they are being called as they should
+* The views
+  * That they show and hide things as they should depending on the app state
+  * That they enact the corret behaviour when interacted with
+
+The last point there is important, because with most frameworks, you need to use a browser to test the behaviour of the UI in interaction with the user. With Replicant, if you let your use of it be inspired by its functional and data oriented approach, testing view interaction can be done like so:
+
+1. Call the view function with some state
+2. Collect the actions bound to the dom and element life cycle events of the view
+3. Run the action handlers for each event in some order, simulating user interaction
+  - Check that the state has been updated as expected
+  - Check that it will trigger the correct effects
+
+Combining this with keeping the views stupid, we can run the tests in node-js, without a browser. The tests [cover*](#work-in-progress) a lot of what the browser based TodoMVC end-to-end test suite covers. The tests are watched and run whenever a file changes. They run in a few milliseconds (compared to minutes for the browser based tests). They can conveniently be run in the REPL, Interactive Programming, wether you run whole or parts or the test suite, individual tests, or just pieces of code in some test.
+
+Also:
+
+> Check that the state has been updated as expected
+
+Since the state is immutable data, each test is completely isolated, there is no need for any setup or teardown.
+
+**NB**: The app passes the TodoMVC end-to-end in-browser test suite.
+
+#### Work in progress
+
+The test suite is not yet complete. It's about 30% done. It's being worked on and we should soon be done (you can help, if you like). When the tests are done we hopefully will cover more than 90% of the TodoMVC test suite.
+
 ### Read more about the general approach in the mini-app example
 
-To understand a bit more about the code in this example, read the more comprehensive README of the [Replicant mini-app](https://github.com/anteoas/replicant-mini-app) example.
+To understand a bit more about the code in this example, check the README of the [Replicant mini-app](https://github.com/anteoas/replicant-mini-app) example, which discusses some more aspects of the general approach that is used.
 
 ## Building the app
 
@@ -91,13 +126,13 @@ Prerequisites:
 npm run build
 ```
 
-#### Testing
+#### Running the tests
 
 ```sh
 node out/tests.js
 ```
 
-This tests business rules and some parts of our tiny framework. Since the software under test is free of side effects, we can test it without a browser. (The TodoMVC project has end-to-end in-browser tests, which all pass with this example app.)
+This tests business rules and some parts of our tiny framework. Since the software under test is free of side effects, we can test it without a browser.
 
 ### Running the app in development mode
 
