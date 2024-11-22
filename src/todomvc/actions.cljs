@@ -91,6 +91,19 @@
       [:edit/ax.end-editing draft index]
       {:new-state (end-editing state (:edit/keyup-code state) draft index)})))
 
+(defn handle-actions [state replicant-data actions]
+  (reduce (fn [{state :new-state :as acc} action]
+            (let [{:keys [new-state effects]} (handle-action state replicant-data action)]
+              (when (and js/goog.DEBUG
+                         (exists? js/window))
+                (js/console.debug "Triggered action" action))
+              (cond-> acc
+                new-state (assoc :new-state new-state)
+                effects (update :effects into effects))))
+          {:new-state state
+           :effects []}
+          actions))
+
 (defn perform-effect! [{:keys [^js replicant/js-event]} effect]
   (match effect
     [:console/fx.debug & args]

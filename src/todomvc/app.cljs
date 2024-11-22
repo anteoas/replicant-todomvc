@@ -12,14 +12,13 @@
    (views/app-view state)))
 
 (defn- event-handler [replicant-data actions]
-  (doseq [action actions]
-    (when js/goog.DEBUG (prn "Triggered action" action))
-    (let [{:keys [new-state effects]} (actions/handle-action @db/!state replicant-data action)]
-      (when new-state
-        (reset! db/!state new-state))
-      (when effects
-        (doseq [effect effects]
-          (actions/perform-effect! replicant-data effect))))))
+  (let [{:keys [new-state effects]} (actions/handle-actions @db/!state replicant-data actions)]
+    (when new-state
+      (reset! db/!state new-state))
+    (when effects
+      (doseq [effect effects]
+        (when js/goog.DEBUG (js/console.debug "Triggered effect" effect))
+        (actions/perform-effect! replicant-data effect)))))
 
 (defn ^{:dev/after-load true :export true} start! []
   (render! @db/!state))
