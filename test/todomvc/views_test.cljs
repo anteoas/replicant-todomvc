@@ -46,16 +46,6 @@
   (->> (select-attribute selector path data)
        flatten-actions))
 
-(defn- handle-actions [state replicant-data actions]
-  (reduce (fn [{state :new-state :as acc} action]
-            (let [{:keys [new-state effects]} (a/handle-action state replicant-data action)]
-              (cond-> acc
-                new-state (assoc :new-state new-state)
-                effects (update :effects into effects))))
-          {:new-state state
-           :effects []}
-          actions))
-
 #_{:clj-kondo/ignore [:private-call]}
 (defn test-add-view-mount [state]
   #_{:clj-kondo/ignore [:inline-def :clojure-lsp/unused-public-var]}
@@ -63,9 +53,9 @@
     (def state {}))
   (let [on-mount-actions (->> (sut/add-view state)
                               (select-actions :input.new-todo [:replicant/on-mount]))
-        {:keys [new-state effects] :as result} (handle-actions state
-                                                               {:replicant/node :input-dom-node}
-                                                               on-mount-actions)]
+        {:keys [new-state effects] :as result} (a/handle-actions state
+                                                                 {:replicant/node :input-dom-node}
+                                                                 on-mount-actions)]
     (is (= :input-dom-node
            (:add/draft-input-element new-state)))
     (is (empty? effects)
@@ -80,9 +70,9 @@
     (def add-text "Input"))
   (let [on-input-actions (->> (sut/add-view state)
                               (select-actions :input.new-todo [:on :input]))
-        {:keys [new-state effects] :as result} (handle-actions state
-                                                               {:replicant/js-event (clj->js {:target {:value add-text}})}
-                                                               on-input-actions)]
+        {:keys [new-state effects] :as result} (a/handle-actions state
+                                                                 {:replicant/js-event (clj->js {:target {:value add-text}})}
+                                                                 on-input-actions)]
     (is (= add-text
            (:add/draft new-state)))
     (is (empty? effects)
@@ -101,9 +91,9 @@
           (testing "it handles the form submit event"
             (let [on-submit-actions (->> (sut/add-view new-state)
                                          (select-actions :form [:on :submit]))
-                  {:keys [new-state effects]} (handle-actions new-state
-                                                              {}
-                                                              on-submit-actions)]
+                  {:keys [new-state effects]} (a/handle-actions new-state
+                                                                {}
+                                                                on-submit-actions)]
               (is (= input-text
                      (-> new-state :app/todo-items first :item/title))
                   "it adds the new item to the todo items")
@@ -125,9 +115,9 @@
           (testing "it handles the form submit event"
             (let [on-submit-actions (->> (sut/add-view new-state)
                                          (select-actions :form [:on :submit]))
-                  {:keys [new-state]} (handle-actions new-state
-                                                      {}
-                                                      on-submit-actions)]
+                  {:keys [new-state]} (a/handle-actions new-state
+                                                        {}
+                                                        on-submit-actions)]
               (is (= input-text
                      (-> new-state :app/todo-items first :item/title))
                   "it adds the new item with trimmed text to the todo items")))))
@@ -139,9 +129,9 @@
           (testing "it handles the form submit event"
             (let [on-submit-actions (->> (sut/add-view new-state)
                                          (select-actions :form [:on :submit]))
-                  {:keys [new-state effects]} (handle-actions new-state
-                                                              {}
-                                                              on-submit-actions)]
+                  {:keys [new-state effects]} (a/handle-actions new-state
+                                                                {}
+                                                                on-submit-actions)]
               (is (empty? (:app/todo-items new-state))
                   "it does not add a new item to the todo items")
               (is (= ""
@@ -177,9 +167,9 @@
     (let [initial-state {:edit/editing-item-index 0}
           on-mount-actions (->> (sut/edit-view initial-state {:index 0})
                                 (select-actions :input.edit [:replicant/on-mount]))
-          {:keys [new-state effects]} (handle-actions initial-state
-                                                      {:replicant/node :input-dom-node}
-                                                      on-mount-actions)]
+          {:keys [new-state effects]} (a/handle-actions initial-state
+                                                        {:replicant/node :input-dom-node}
+                                                        on-mount-actions)]
       (is (some #{[:dom/fx.focus-element :input-dom-node]}
                 (set effects))
           "it focuses the input element")
@@ -191,9 +181,9 @@
     (let [initial-state {:edit/editing-item-index 0}
           on-input-actions (->> (sut/edit-view initial-state {:index 0})
                                 (select-actions :input.edit [:on :input]))
-          {:keys [new-state effects]} (handle-actions initial-state
-                                                      {:replicant/js-event (clj->js {:target {:value "Input"}})}
-                                                      on-input-actions)]
+          {:keys [new-state effects]} (a/handle-actions initial-state
+                                                        {:replicant/js-event (clj->js {:target {:value "Input"}})}
+                                                        on-input-actions)]
       (is (= "Input"
              (:edit/draft new-state))
           "it updates the draft")
@@ -204,9 +194,9 @@
     (let [initial-state {:edit/editing-item-index 0}
           on-keyup-actions (->> (sut/edit-view initial-state {:index 0})
                                 (select-actions :input.edit [:on :keyup]))
-          {:keys [new-state effects]} (handle-actions initial-state
-                                                      {:replicant/js-event (clj->js {:code "Escape"})}
-                                                      on-keyup-actions)]
+          {:keys [new-state effects]} (a/handle-actions initial-state
+                                                        {:replicant/js-event (clj->js {:code "Escape"})}
+                                                        on-keyup-actions)]
       (is (= "Escape"
              (:edit/keyup-code new-state))
           "it saves the keycode")
@@ -217,9 +207,9 @@
     (let [initial-state {:edit/editing-item-index 0}
           on-blur-actions (->> (sut/edit-view initial-state {:index 0})
                                (select-actions :input.edit [:on :blur]))
-          {:keys [new-state effects]} (handle-actions initial-state
-                                                      {}
-                                                      on-blur-actions)]
+          {:keys [new-state effects]} (a/handle-actions initial-state
+                                                        {}
+                                                        on-blur-actions)]
       on-blur-actions
       (is (nil?
            (:edit/editing-item-index new-state))
@@ -230,10 +220,10 @@
   (testing "it removes the editing index on form submit"
     (let [initial-state {:edit/editing-item-index 0}
           on-submit-actions (->> (sut/edit-view initial-state {:index 0})
-                                (select-actions :form [:on :submit]))
-          {:keys [new-state effects]} (handle-actions initial-state
-                                                      {}
-                                                      on-submit-actions)]
+                                 (select-actions :form [:on :submit]))
+          {:keys [new-state effects]} (a/handle-actions initial-state
+                                                        {}
+                                                        on-submit-actions)]
       (is (nil?
            (:edit/editing-item-index new-state))
           "it removes the editing index")
@@ -249,9 +239,9 @@
                            :app/todo-items [{:item/title "Title"}]}
             on-unmount-actions (->> (sut/edit-view initial-state {:index 0})
                                     (select-actions :form [:replicant/on-unmount]))
-            {:keys [new-state effects]} (handle-actions initial-state
-                                                        {}
-                                                        on-unmount-actions)]
+            {:keys [new-state effects]} (a/handle-actions initial-state
+                                                          {}
+                                                          on-unmount-actions)]
         (is (= (string/trim input)
                (-> new-state :app/todo-items first :item/title))
             behaviour)
@@ -286,9 +276,9 @@
                            :app/todo-items items}
             on-unmount-actions (->> (sut/edit-view initial-state {:index 1})
                                     (select-actions :form [:replicant/on-unmount]))
-            {:keys [new-state effects]} (handle-actions initial-state
-                                                        {}
-                                                        on-unmount-actions)]
+            {:keys [new-state effects]} (a/handle-actions initial-state
+                                                          {}
+                                                          on-unmount-actions)]
         (is (= [(first items) (last items)]
                (:app/todo-items new-state))
             input-behaviour)
@@ -327,9 +317,9 @@
             unmounting-state (assoc rendering-state :edit/keyup-code "Escape")
             on-unmount-actions (->> (sut/edit-view rendering-state {:index 1})
                                     (select-actions :form [:replicant/on-unmount]))
-            {:keys [new-state effects]} (handle-actions unmounting-state
-                                                        {}
-                                                        on-unmount-actions)]
+            {:keys [new-state effects]} (a/handle-actions unmounting-state
+                                                          {}
+                                                          on-unmount-actions)]
         (is (= initial-items
                (:app/todo-items new-state))
             "it doesn't update any item")
@@ -353,14 +343,14 @@
   (testing "the `.todoapp` element contains an autofocused `.new-todo` input in the `.header` element"
     (is (= '(true)
            (select-attribute '[.todoapp .header input.new-todo]
-                                [:autofocus]
-                                (sut/app-view {})))
+                             [:autofocus]
+                             (sut/app-view {})))
         "with an empty app state")
 
     (is (= '(true)
            (select-attribute '[.todoapp .header input.new-todo]
-                                [:autofocus]
-                                (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
+                             [:autofocus]
+                             (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
         "with items in the app state"))
 
   (testing "the `.todoapp` element `.main` element"
