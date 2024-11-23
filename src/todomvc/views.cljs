@@ -14,7 +14,8 @@
   [:form {:on {:submit [[:dom/ax.prevent-default]
                         [:db/ax.update :app/todo-items maybe-add draft]
                         [:db/ax.assoc :add/draft ""]
-                        [:dom/ax.set-input-text [:db/get :add/draft-input-element] ""]]}}
+                        [:dom/ax.set-input-text [:db/get :add/draft-input-element] ""]
+                        [:app/ax.set-mark-all-state]]}}
    [:input.new-todo {:replicant/on-mount [[:db/ax.assoc :add/draft-input-element :dom/node]]
                      :type :text
                      :autofocus true

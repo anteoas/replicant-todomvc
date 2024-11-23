@@ -39,12 +39,12 @@
                    (get-in (second element) path)))
                elements))))
 
-(defn- flatten-actions [actionss]
+(defn- flatten-actionss [actionss]
   (reduce into [] actionss))
 
 (defn- select-actions [selector path data]
   (->> (select-attribute selector path data)
-       flatten-actions))
+       flatten-actionss))
 
 #_{:clj-kondo/ignore [:private-call]}
 (defn test-add-view-mount [state]
@@ -82,7 +82,10 @@
 #_{:clj-kondo/ignore [:private-call]}
 (deftest add-view
   (testing "it saves draft input element on mount"
-    (let [{:keys [new-state]} (test-add-view-mount {})]
+    (let [initial-state {:app/todo-items [{:item/completed? true
+                                           :item/id "id-1"}]
+                         :app/mark-all-checkbox-checked? true}
+          {:keys [new-state]} (test-add-view-mount initial-state)]
 
       (testing "it updates the draft from the `.new-todo` input event"
         (let [input-text "Input"
@@ -95,8 +98,12 @@
                                                                 {}
                                                                 on-submit-actions)]
               (is (= input-text
-                     (-> new-state :app/todo-items first :item/title))
+                     (-> new-state :app/todo-items second :item/title))
                   "it adds the new item to the todo items")
+              (is (false? (-> new-state :app/todo-items second :item/completed?))
+                  "it adds the new item as uncompleted")
+              (is (false? (:app/mark-all-checkbox-checked? new-state))
+                  "it updates the mark-all state to true")
               (is (= ""
                      (:add/draft new-state))
                   "it clears the draft")
@@ -119,7 +126,7 @@
                                                         {}
                                                         on-submit-actions)]
               (is (= input-text
-                     (-> new-state :app/todo-items first :item/title))
+                     (-> new-state :app/todo-items second :item/title))
                   "it adds the new item with trimmed text to the todo items")))))
 
       (testing "it doesn't add an item when the input is empty"
@@ -132,7 +139,8 @@
                   {:keys [new-state effects]} (a/handle-actions new-state
                                                                 {}
                                                                 on-submit-actions)]
-              (is (empty? (:app/todo-items new-state))
+              (is (= (:app/todo-items initial-state)
+                     (:app/todo-items new-state))
                   "it does not add a new item to the todo items")
               (is (= ""
                      (:add/draft new-state))
