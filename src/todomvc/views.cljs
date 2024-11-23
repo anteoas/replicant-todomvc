@@ -21,7 +21,7 @@
                      :placeholder "What needs to be done?"
                      :on {:input [[:db/ax.assoc :add/draft :event/target.value]]}}]])
 
-(defn- edit-view [{:keys [edit/editing-item-index edit/draft edit/keyup-code]} {:keys [index item]}]
+(defn- edit-view [{:keys [edit/editing-item-index edit/draft edit/keyup-code]} index item]
   (when (and (= index editing-item-index)
              (not= "Escape" keyup-code))
     [:form {:replicant/key (:item/id item)
@@ -41,33 +41,33 @@
       (and (= :filter/completed item-filter)
            (:item/completed item))))
 
-(defn- todo-list-view [{:keys [app/todo-items edit/editing-item-index app/item-filter]
-                        :as state}]
+(defn item-view [{:keys [edit/editing-item-index app/item-filter] :as state} index item]
+  (when (item-visible? item item-filter)
+    [:li {:replicant/key (:item/id item)
+          :style {:max-height "calc(24px * 1.2 + 40px)"
+                  :overflow-y :hidden
+                  :transition "max-height 0.25s ease-out"}
+          :replicant/mounting {:style {:max-height 0}}
+          :replicant/unmounting {:style {:max-height 0}}
+          :class (cond
+                   (= index editing-item-index) "editing"
+                   (:item/completed item)       "completed")
+          :on {:dblclick [[:db/ax.assoc
+                           :edit/editing-item-index index
+                           :edit/draft (:item/title item)]]}}
+     [:div.view
+      [:input.toggle {:type :checkbox
+                      :checked (:item/completed item)
+                      :on {:change [[:db/ax.update-in [:app/todo-items index :item/completed] not]
+                                    [:app/ax.set-mark-all-state]]}}]
+      [:label (:item/title item)]
+      [:button.destroy {:on {:click [[:db/ax.update :app/todo-items (partial cu/remove-nth index)]
+                                     [:app/ax.set-mark-all-state]]}}]]
+     (edit-view state index item)]))
+
+(defn- todo-list-view [{:keys [app/todo-items] :as state}]
   [:ul.todo-list
-   (map-indexed (fn [index item]
-                  (when (item-visible? item item-filter)
-                    [:li {:replicant/key (:item/id item)
-                          :style {:max-height "calc(24px * 1.2 + 40px)"
-                                  :overflow-y :hidden
-                                  :transition "max-height 0.25s ease-out"}
-                          :replicant/mounting {:style {:max-height 0}}
-                          :replicant/unmounting {:style {:max-height 0}}
-                          :class (cond
-                                   (= index editing-item-index) "editing"
-                                   (:item/completed item)       "completed")
-                          :on {:dblclick [[:db/ax.assoc
-                                           :edit/editing-item-index index
-                                           :edit/draft (:item/title item)]]}}
-                     [:div.view
-                      [:input.toggle {:type :checkbox
-                                      :checked (:item/completed item)
-                                      :on {:change [[:db/ax.update-in [:app/todo-items index :item/completed] not]
-                                                    [:app/ax.set-mark-all-state]]}}]
-                      [:label (:item/title item)]
-                      [:button.destroy {:on {:click [[:db/ax.update :app/todo-items (partial cu/remove-nth index)]
-                                                     [:app/ax.set-mark-all-state]]}}]]
-                     (edit-view state {:index index
-                                       :item item})]))
+   (map-indexed (partial item-view state)
                 todo-items)])
 
 (defn- main-view [state]
@@ -99,14 +99,6 @@
        [:button.clear-completed {:on {:click [[:db/ax.update :app/todo-items (partial filterv (complement :item/completed))]]}}
         "Clear completed"])]))
 
-(defn- app-footer-view []
-  [:footer.info
-   [:p "Double-click to edit a todo"]
-   [:p "Created by "
-    [:a {:href "https://github.com/anteoas"} "Anteo AS developers"]]
-   [:p "Part of "
-    [:a {:href "https://todomvc.com"} "TodoMVC"]]])
-
 (defn app-view [{:keys [app/todo-items] :as state}]
   [:div
    [:section.todoapp
@@ -114,7 +106,11 @@
      [:h1 "todos"]
      (add-view state)]
     (when (seq todo-items)
-      (list
-       (main-view state)
-       (items-footer-view state)))]
-   (app-footer-view)])
+      (list (main-view state)
+            (items-footer-view state)))]
+   [:footer.info
+    [:p "Double-click to edit a todo"]
+    [:p "Created by "
+     [:a {:href "https://github.com/anteoas"} "Anteo AS developers"]]
+    [:p "Part of "
+     [:a {:href "https://todomvc.com"} "TodoMVC"]]]])
