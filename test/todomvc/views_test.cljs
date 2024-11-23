@@ -39,12 +39,12 @@
                    (get-in (second element) path)))
                elements))))
 
-(defn- flatten-actions [actionss]
+(defn- flatten-actionss [actionss]
   (reduce into [] actionss))
 
 (defn- select-actions [selector path data]
   (->> (select-attribute selector path data)
-       flatten-actions))
+       flatten-actionss))
 
 #_{:clj-kondo/ignore [:private-call]}
 (defn test-add-view-mount [state]
