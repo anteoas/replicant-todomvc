@@ -177,6 +177,14 @@
              new-state)
           "it does not modify the state")))
 
+  (testing "it populates the edit view from the edited item"
+    (let [item {:item/title "Title"}
+          initial-state {:edit/editing-item-index 0}
+          edit-view (sut/edit-view initial-state 0 item)]
+      (is (= [(:item/title item)]
+             (select-attribute :input.edit [:value] edit-view))
+          "it populates the input with the item title")))
+
   (testing "it updates the draft from the input event"
     (let [initial-state {:edit/editing-item-index 0}
           on-input-actions (->> (sut/edit-view initial-state 0 {})
