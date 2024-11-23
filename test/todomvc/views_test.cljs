@@ -343,6 +343,131 @@
         (is (nil? (:app/mark-all-state new-state))
             "it does not update the mark-all state")))))
 
+(deftest item-view
+  (testing "item rendering"
+    (let [item {:item/title "Test Item"}
+          view (sut/item-view {:app/item-filter :filter/all} 0 item)]
+      (is (seq (l/select [:li :.view] view))
+          "it renders the item in a list item containing a .view element")
+      (is (= [[:label (:item/title item)]]
+             (l/select :label view))
+          "it displays the item's title"))
+
+    (testing "filtering"
+      (is (not= nil?
+                (sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
+                                                                 :item/completed true}))
+          "it renders a completed item when filtering on all")
+      (is (not= nil?
+                (sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
+                                                                 :item/completed false}))
+          "it renders an uncompleted item when filtering on all")
+      (is (nil?
+           (sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
+                                                                  :item/completed false}))
+          "it does not render an uncompleted item when filtering on completed")
+      (is (not= nil?
+                (sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
+                                                                       :item/completed true}))
+          "it renders a completed items when filtering on completed")
+      (is (nil?
+           (sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
+                                                               :item/completed true}))
+          "it does not render a completed item when filtering on active")
+      (is (not= nil?
+                (sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
+                                                                    :item/completed false}))
+          "it renders an uncompleted item when filtering on active"))
+
+    (testing "editing"
+      (is (some #{"editing"}
+                (->> (sut/item-view {:edit/editing-item-index 0
+                                     :app/item-filter :filter/all}
+                                    0
+                                    {})
+                     (select-attribute :li [:class])
+                     first))
+          "The item should have the 'editing' class when it is being edited")
+      (is (not-any? #{"editing"}
+                    (->> (sut/item-view {:edit/editing-item-index 0
+                                         :app/item-filter :filter/all}
+                                        1
+                                        {})
+                         (select-attribute :li [:class])
+                         first))
+          "The item should not have the 'editing' class when another item is being edited")
+      (is (not-any? #{"editing"}
+                    (->> (sut/item-view {:app/item-filter :filter/all}
+                                        1
+                                        {})
+                         (select-attribute :li [:class])
+                         first))
+          "The item should not have the 'editing' class when no item is being edited"))
+
+    (testing "completed"
+      (is (some #{"completed"}
+                (->> (sut/item-view {:app/item-filter :filter/all}
+                                    0 {:item/title "Test Item"
+                                       :item/completed true})
+                     (select-attribute :li [:class])
+                     first))
+          "The item should have the 'completed' class when it is completed")
+      (is (not-any? #{"completed"}
+                    (->> (sut/item-view {:app/item-filter :filter/all}
+                                        0 {:item/title "Test Item"
+                                           :item/completed false})
+                         (select-attribute :li [:class])
+                         first))
+          "The item should not have the 'completed' class when it is uncompleted")))
+
+  (testing "it triggers the correct actions on double-click"
+    (let [state {:app/item-filter :filter/all}
+          item {:item/title "Test Item"
+                :item/completed false}
+          view (sut/item-view state 0 item)
+          on-dblclick-actions (select-actions :li [:on :dblclick] view)]
+      (is (seq on-dblclick-actions) "Double-clicking the item should trigger the correct actions")
+      ;; Check that the correct actions are triggered
+      ))
+
+  (testing "the toggle checkbox"
+    (let [state {:edit/editing-item-index nil
+                 :app/item-filter :filter/all
+                 :app/todo-items [{:item/title "Test Item" :item/completed false}]}
+          item (first (:app/todo-items state))
+          view (sut/item-view state 0 item)]
+      (is (false? (-> (select-attribute :input.toggle [:checked] view) first))
+          "The checkbox should not be checked initially")
+      (let [on-change-actions (select-actions :input.toggle [:on :change] view)
+            {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
+        (is (true? (-> new-state :app/todo-items first :item/completed))
+            "Changing the checkbox should mark the item as completed")))
+
+    (let [state {:edit/editing-item-index nil
+                 :app/item-filter :filter/all
+                 :app/todo-items [{:item/title "Test Item" :item/completed true}]}
+          item (first (:app/todo-items state))
+          view (sut/item-view state 0 item)]
+      (is (true? (-> (select-attribute :input.toggle [:checked] view) first))
+          "The checkbox should be checked initially")
+      (let [on-change-actions (select-actions :input.toggle [:on :change] view)
+            {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
+        (is (false? (-> new-state :app/todo-items first :item/completed))
+            "Unchecking the checkbox should mark the item as not completed"))))
+
+  (testing "delete button"
+    (let [state {:app/item-filter :filter/all
+                 :app/todo-items [{:item/title "Test Item"
+                                   :item/completed false}]}
+          item (first (:app/todo-items state))
+          view (sut/item-view state 0 item)
+          on-click-actions (select-actions :button.destroy [:on :click] view)
+          {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
+      (is (empty? (:app/todo-items new-state))
+          "Clicking the delete button should remove the item from the todo list")
+      (is (empty? effects)
+          "it does so without other side-effects"))))
+
 (deftest app-view
   (testing "it shows a `.todoapp` element"
     (is (seq (l/select '.todoapp (sut/app-view {})))))
