@@ -99,14 +99,6 @@
        [:button.clear-completed {:on {:click [[:db/ax.update :app/todo-items (partial filterv (complement :item/completed))]]}}
         "Clear completed"])]))
 
-(defn- app-footer-view []
-  [:footer.info
-   [:p "Double-click to edit a todo"]
-   [:p "Created by "
-    [:a {:href "https://github.com/anteoas"} "Anteo AS developers"]]
-   [:p "Part of "
-    [:a {:href "https://todomvc.com"} "TodoMVC"]]])
-
 (defn app-view [{:keys [app/todo-items] :as state}]
   [:div
    [:section.todoapp
@@ -114,7 +106,11 @@
      [:h1 "todos"]
      (add-view state)]
     (when (seq todo-items)
-      (list
-       (main-view state)
-       (items-footer-view state)))]
-   (app-footer-view)])
+      (list (main-view state)
+            (items-footer-view state)))]
+   [:footer.info
+    [:p "Double-click to edit a todo"]
+    [:p "Created by "
+     [:a {:href "https://github.com/anteoas"} "Anteo AS developers"]]
+    [:p "Part of "
+     [:a {:href "https://todomvc.com"} "TodoMVC"]]]])
