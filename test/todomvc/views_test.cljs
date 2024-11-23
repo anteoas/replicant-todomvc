@@ -148,24 +148,24 @@
 (deftest edit-view
   (testing "rendering the edit view"
     (let [initial-state {:edit/editing-item-index 0}
-          edit-view (sut/edit-view initial-state {:index 0})]
+          edit-view (sut/edit-view initial-state 0 {})]
       (is (l/select :input.edit edit-view)
           "it renders the edit view when the index matches the editing item index"))
 
     (let [initial-state {}
-          edit-view (sut/edit-view initial-state {:index 0})]
+          edit-view (sut/edit-view initial-state 0 {})]
       (is (nil? edit-view)
           "it does not render the edit view when its index does not match the editing item index"))
 
     (let [initial-state  {:edit/editing-item-index 0
                           :edit/keyup-code "Escape"}
-          edit-view (sut/edit-view initial-state {:index 0})]
+          edit-view (sut/edit-view initial-state 0 {})]
       (is (nil? edit-view)
           "it does not render the edit view when the keycode is 'Escape'")))
 
   (testing "edit-view on mount"
     (let [initial-state {:edit/editing-item-index 0}
-          on-mount-actions (->> (sut/edit-view initial-state {:index 0})
+          on-mount-actions (->> (sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:replicant/on-mount]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/node :input-dom-node}
@@ -179,7 +179,7 @@
 
   (testing "it updates the draft from the input event"
     (let [initial-state {:edit/editing-item-index 0}
-          on-input-actions (->> (sut/edit-view initial-state {:index 0})
+          on-input-actions (->> (sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:on :input]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/js-event (clj->js {:target {:value "Input"}})}
@@ -192,7 +192,7 @@
 
   (testing "it saves the keycode to the state on keyup"
     (let [initial-state {:edit/editing-item-index 0}
-          on-keyup-actions (->> (sut/edit-view initial-state {:index 0})
+          on-keyup-actions (->> (sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:on :keyup]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/js-event (clj->js {:code "Escape"})}
@@ -205,7 +205,7 @@
 
   (testing "it removes the editing index on blur"
     (let [initial-state {:edit/editing-item-index 0}
-          on-blur-actions (->> (sut/edit-view initial-state {:index 0})
+          on-blur-actions (->> (sut/edit-view initial-state 0 {})
                                (select-actions :input.edit [:on :blur]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {}
@@ -219,7 +219,7 @@
 
   (testing "it removes the editing index on form submit"
     (let [initial-state {:edit/editing-item-index 0}
-          on-submit-actions (->> (sut/edit-view initial-state {:index 0})
+          on-submit-actions (->> (sut/edit-view initial-state 0 {})
                                  (select-actions :form [:on :submit]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {}
@@ -234,10 +234,11 @@
   (testing "end editing"
     (doseq [[input behaviour] [["Input" "it updates the item title"]
                                ["  Input  " "it trims the input"]]]
-      (let [initial-state {:edit/editing-item-index 0
+      (let [item {:item/title "Title"}
+            initial-state {:edit/editing-item-index 0
                            :edit/draft input
-                           :app/todo-items [{:item/title "Title"}]}
-            on-unmount-actions (->> (sut/edit-view initial-state {:index 0})
+                           :app/todo-items [item]}
+            on-unmount-actions (->> (sut/edit-view initial-state 0 item)
                                     (select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
@@ -254,18 +255,20 @@
 
     (doseq [[input input-behaviour] [["" "it removes the item if the input is empty"]
                                      ["  " "it removes the item if the trimmed input is empty"]]
+            completed-item {:item/title "Title2"
+                            :item/completed true}
+            uncompleted-item {:item/title "Title2"
+                              :item/completed false}
             [items mark-all-state items-behaviour] [[[{:item/title "Title1"
                                                        :item/completed false}
-                                                      {:item/title "Title2"
-                                                       :item/completed true}
+                                                      completed-item
                                                       {:item/title "Title3"
                                                        :item/completed false}]
                                                      false
                                                      "it sets the mark-all state to false if the remaining items are uncompleted"]
                                                     [[{:item/title "Title1"
                                                        :item/completed true}
-                                                      {:item/title "Title2"
-                                                       :item/completed false}
+                                                      uncompleted-item
                                                       {:item/title "Title3"
                                                        :item/completed true}]
                                                      true
@@ -274,7 +277,7 @@
                            :edit/keyup-code "Enter"
                            :edit/draft input
                            :app/todo-items items}
-            on-unmount-actions (->> (sut/edit-view initial-state {:index 1})
+            on-unmount-actions (->> (sut/edit-view initial-state 1 (second items))
                                     (select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
@@ -303,19 +306,19 @@
       ;     hence the edit UI was rendered
       ;   * The state captured at unmounting the view _had_ an `:edit/keyup-code "Escape"` entry,
       ;     and this should cause the indexed todo item to be left unchanged
-      (let [initial-items [{:item/title "Title1"
+      (let [item {:item/title "Title2"
+                  :item/completed true}
+            initial-items [{:item/title "Title1"
                             :item/completed false}
-                           {:item/title "Title2"
-                            :item/completed true}
+                           item
                            {:item/title "Title3"
                             :item/completed false}]
-
             rendering-state {:edit/editing-item-index 1
                              :edit/keyup-code "KeyT" ; Doesn't matter, but if the "t" in "Input" was typed last...
                              :edit/draft "Input"
                              :app/todo-items initial-items}
             unmounting-state (assoc rendering-state :edit/keyup-code "Escape")
-            on-unmount-actions (->> (sut/edit-view rendering-state {:index 1})
+            on-unmount-actions (->> (sut/edit-view rendering-state 1 item)
                                     (select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions unmounting-state
                                                           {}

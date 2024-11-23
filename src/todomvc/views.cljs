@@ -21,7 +21,7 @@
                      :placeholder "What needs to be done?"
                      :on {:input [[:db/ax.assoc :add/draft :event/target.value]]}}]])
 
-(defn- edit-view [{:keys [edit/editing-item-index edit/draft edit/keyup-code]} {:keys [index item]}]
+(defn- edit-view [{:keys [edit/editing-item-index edit/draft edit/keyup-code]} index item]
   (when (and (= index editing-item-index)
              (not= "Escape" keyup-code))
     [:form {:replicant/key (:item/id item)
@@ -63,8 +63,7 @@
       [:label (:item/title item)]
       [:button.destroy {:on {:click [[:db/ax.update :app/todo-items (partial cu/remove-nth index)]
                                      [:app/ax.set-mark-all-state]]}}]]
-     (edit-view state {:index index
-                       :item item})]))
+     (edit-view state index item)]))
 
 (defn- todo-list-view [{:keys [app/todo-items] :as state}]
   [:ul.todo-list
