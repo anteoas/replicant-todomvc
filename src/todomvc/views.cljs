@@ -7,7 +7,7 @@
     (if (string/blank? trimmed)
       coll
       (conj coll {:item/title trimmed
-                  :item/completed false
+                  :item/completed? false
                   :item/id (random-uuid)}))))
 
 (defn- add-view [{:keys [add/draft]}]
@@ -37,9 +37,9 @@
 (defn- item-visible? [item item-filter]
   (or (= :filter/all item-filter)
       (and (= :filter/active item-filter)
-           (not (:item/completed item)))
+           (not (:item/completed? item)))
       (and (= :filter/completed item-filter)
-           (:item/completed item))))
+           (:item/completed? item))))
 
 (defn item-view [{:keys [edit/editing-item-index app/item-filter] :as state} index item]
   (when (item-visible? item item-filter)
@@ -51,14 +51,14 @@
           :replicant/unmounting {:style {:max-height 0}}
           :class (cond
                    (= index editing-item-index) "editing"
-                   (:item/completed item)       "completed")
+                   (:item/completed? item)       "completed")
           :on {:dblclick [[:db/ax.assoc
                            :edit/editing-item-index index
                            :edit/draft (:item/title item)]]}}
      [:div.view
       [:input.toggle {:type :checkbox
-                      :checked (:item/completed item)
-                      :on {:change [[:db/ax.update-in [:app/todo-items index :item/completed] not]
+                      :checked (:item/completed? item)
+                      :on {:change [[:db/ax.update-in [:app/todo-items index :item/completed?] not]
                                     [:app/ax.set-mark-all-state]]}}]
       [:label (:item/title item)]
       [:button.destroy {:on {:click [[:db/ax.update :app/todo-items (partial cu/remove-nth index)]
@@ -73,15 +73,15 @@
 (defn- main-view [state]
   [:div.main
    [:input#toggle-all.toggle-all {:type :checkbox
-                                  :checked (:app/mark-all-state state)
-                                  :on {:change [[:db/ax.assoc :app/mark-all-state :event/target.checked]
+                                  :checked (:app/mark-all-checkbox-checked? state)
+                                  :on {:change [[:db/ax.assoc :app/mark-all-checkbox-checked? :event/target.checked]
                                                 [:app/ax.mark-all-items-as :event/target.checked]]}}]
    [:label {:for "toggle-all"}
     "Mark all as complete"]
    (todo-list-view state)])
 
 (defn- items-footer-view [{:keys [app/todo-items app/item-filter]}]
-  (let [active-count (count (remove :item/completed todo-items))]
+  (let [active-count (count (remove :item/completed? todo-items))]
     [:footer.footer
      [:span.todo-count
       [:strong active-count]
@@ -95,8 +95,8 @@
                 :href "#/active"} "Active"]]
       [:li [:a {:class (when (= :filter/completed item-filter) "selected")
                 :href "#/completed"} "Completed"]]]
-     (when (seq (filter :item/completed todo-items))
-       [:button.clear-completed {:on {:click [[:db/ax.update :app/todo-items (partial filterv (complement :item/completed))]]}}
+     (when (seq (filter :item/completed? todo-items))
+       [:button.clear-completed {:on {:click [[:db/ax.update :app/todo-items (partial filterv (complement :item/completed?))]]}}
         "Clear completed"])]))
 
 (defn app-view [{:keys [app/todo-items] :as state}]

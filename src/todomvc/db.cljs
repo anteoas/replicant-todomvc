@@ -10,7 +10,7 @@
 
 (def ^:private persist-keys [:app/todo-items
                              :add/draft
-                             :app/mark-all-state])
+                             :app/mark-all-checkbox-checked?])
 
 (defn- load-persisted! []
   (or (->> (.getItem js/localStorage storage-key)

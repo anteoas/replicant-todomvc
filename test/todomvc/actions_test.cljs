@@ -5,70 +5,70 @@
 #_{:clj-kondo/ignore [:private-call]}
 (deftest get-mark-all-as-state
   (testing "false when all items are completed"
-    (is (false? (sut/get-mark-all-as-state [{:item/completed true}
-                                            {:item/completed true}
-                                            {:item/completed true}]))))
+    (is (false? (sut/get-mark-all-as-state [{:item/completed? true}
+                                            {:item/completed? true}
+                                            {:item/completed? true}]))))
 
   (testing "true when no items are completed"
-    (is (true? (sut/get-mark-all-as-state [{:item/completed false}
-                                           {:item/completed false}
-                                           {:item/completed false}]))))
+    (is (true? (sut/get-mark-all-as-state [{:item/completed? false}
+                                           {:item/completed? false}
+                                           {:item/completed? false}]))))
 
   (testing "true when some items are completed"
-    (is (true? (sut/get-mark-all-as-state [{:item/completed true}
-                                           {:item/completed false}
-                                           {:item/completed true}]))))
+    (is (true? (sut/get-mark-all-as-state [{:item/completed? true}
+                                           {:item/completed? false}
+                                           {:item/completed? true}]))))
 
   (testing "true when items list is empty"
     (is (true? (sut/get-mark-all-as-state [])))))
 
 (deftest handle-action-set-mark-all-state
   (testing "it should set mark-all-state to true when all items are completed"
-    (let [state {:app/todo-items [{:item/completed true}
-                                  {:item/completed true}]}]
+    (let [state {:app/todo-items [{:item/completed? true}
+                                  {:item/completed? true}]}]
       (is (true?
            (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
                :new-state
-               :app/mark-all-state)))))
+               :app/mark-all-checkbox-checked?)))))
 
   (testing "it should set mark-all-state to false when some items are not completed"
-    (let [state {:app/todo-items [{:item/completed true}
-                                  {:item/completed false}]}]
+    (let [state {:app/todo-items [{:item/completed? true}
+                                  {:item/completed? false}]}]
       (is (false?
            (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
                :new-state
-               :app/mark-all-state))))
+               :app/mark-all-checkbox-checked?))))
 
     (testing "it should set mark-all-state to false when all items are not completed"
-      (let [state {:app/todo-items [{:item/completed false}
-                                    {:item/completed false}]}]
+      (let [state {:app/todo-items [{:item/completed? false}
+                                    {:item/completed? false}]}]
         (is (false?
              (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
                  :new-state
-                 :app/mark-all-state))))))
+                 :app/mark-all-checkbox-checked?))))))
 
   (testing "it should set mark-all-state to false when items list is empty"
     (let [state {:app/todo-items []}]
       (is (false?
            (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
                :new-state
-               :app/mark-all-state))))))
+               :app/mark-all-checkbox-checked?))))))
 
 
 (deftest handle-action-mark-all-items-as
   (testing "it should mark all items as completed"
-    (let [state {:app/todo-items [{:item/completed false}
-                                  {:item/completed false}]}]
-      (is (= [{:item/completed true}
-              {:item/completed true}]
+    (let [state {:app/todo-items [{:item/completed? false}
+                                  {:item/completed? false}]}]
+      (is (= [{:item/completed? true}
+              {:item/completed? true}]
              (-> (sut/handle-action state {} [:app/ax.mark-all-items-as true])
                  :new-state
                  :app/todo-items)))))
   (testing "it should mark all items as uncompleted"
-    (let [state {:app/todo-items [{:item/completed true}
-                                  {:item/completed true}]}]
-      (is (= [{:item/completed false}
-              {:item/completed false}]
+    (let [state {:app/todo-items [{:item/completed? true}
+                                  {:item/completed? true}]}]
+      (is (= [{:item/completed? false}
+              {:item/completed? false}]
              (-> (sut/handle-action state {} [:app/ax.mark-all-items-as false])
                  :new-state
                  :app/todo-items))))))
@@ -154,25 +154,25 @@
 
   (testing "should update mark-all state if the item is removed"
     (let [initial-state {:app/todo-items [{:item/title "delete me"
-                                           :item/completed true}]
-                         :app/mark-all-state true}]
+                                           :item/completed? true}]
+                         :app/mark-all-checkbox-checked? true}]
       (is (= {:new-state {:app/todo-items []
-                          :app/mark-all-state false}}
+                          :app/mark-all-checkbox-checked? false}}
              (sut/handle-action initial-state {} [:edit/ax.end-editing "" 0]))
           "should set mark-all state to `false` if the last item is removed"))
     (let [initial-state {:app/todo-items [{:item/title "delete me"
-                                           :item/completed true}
-                                          {:item/completed false}]
-                         :app/mark-all-state true}]
-      (is (= {:new-state {:app/todo-items [{:item/completed false}]
-                          :app/mark-all-state false}}
+                                           :item/completed? true}
+                                          {:item/completed? false}]
+                         :app/mark-all-checkbox-checked? true}]
+      (is (= {:new-state {:app/todo-items [{:item/completed? false}]
+                          :app/mark-all-checkbox-checked? false}}
              (sut/handle-action initial-state {} [:edit/ax.end-editing "" 0]))
           "should set mark-all state to `false` if the last item remaining is not completed"))
     (let [initial-state {:app/todo-items [{:item/title "delete me"
-                                           :item/completed true}
-                                          {:item/completed true}]
-                         :app/mark-all-state false}]
-      (is (= {:new-state {:app/todo-items [{:item/completed true}]
-                          :app/mark-all-state true}}
+                                           :item/completed? true}
+                                          {:item/completed? true}]
+                         :app/mark-all-checkbox-checked? false}]
+      (is (= {:new-state {:app/todo-items [{:item/completed? true}]
+                          :app/mark-all-checkbox-checked? true}}
              (sut/handle-action initial-state {} [:edit/ax.end-editing "" 0]))
           "should set mark-all state to `false` if the last item remaining is not completed"))))

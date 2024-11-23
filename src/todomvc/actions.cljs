@@ -26,14 +26,14 @@
 
 (defn- get-mark-all-as-state [items]
   (let [as-state (if (and (seq items)
-                          (every? :item/completed items))
+                          (every? :item/completed? items))
                    false
-                   (every? :item/completed (filter :item/completed items)))]
+                   (every? :item/completed? (filter :item/completed? items)))]
     as-state))
 
 (defn- mark-items-as [items completed?]
   (mapv (fn [item]
-          (assoc item :item/completed completed?))
+          (assoc item :item/completed? completed?))
         items))
 
 (defn- end-editing [{:keys [app/todo-items] :as state} keyup-code draft index]
@@ -46,7 +46,7 @@
     (cond-> state
       save-edit? (assoc-in [:app/todo-items index :item/title] trimmed)
       delete-item? (assoc :app/todo-items new-items)
-      delete-item? (assoc :app/mark-all-state (not (get-mark-all-as-state new-items)))
+      delete-item? (assoc :app/mark-all-checkbox-checked? (not (get-mark-all-as-state new-items)))
       :always (dissoc :edit/editing-item-index :edit/keyup-code))))
 
 (defn handle-action [state replicant-data action]
@@ -59,7 +59,7 @@
 
       [:app/ax.set-mark-all-state]
       {:new-state (let [items (:app/todo-items state)]
-                    (assoc state :app/mark-all-state (not (get-mark-all-as-state items))))}
+                    (assoc state :app/mark-all-checkbox-checked? (not (get-mark-all-as-state items))))}
 
       [:console/ax.debug & args]
       {:effects [(into [:console/fx.debug] args)]}
