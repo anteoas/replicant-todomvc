@@ -300,7 +300,7 @@
         (is (empty? effects)
             "it does not have other side-effects")
         (is (= mark-all-state
-               (:app/mark-all-state new-state))
+               (:app/mark-all-checkbox-checked? new-state))
             items-behaviour)))
 
     (testing "It does not update the item when Escape has been pressed"
@@ -340,7 +340,7 @@
             "it removes the keycode")
         (is (empty? effects)
             "it does not have other side-effects")
-        (is (nil? (:app/mark-all-state new-state))
+        (is (nil? (:app/mark-all-checkbox-checked? new-state))
             "it does not update the mark-all state")))))
 
 (deftest item-view
@@ -435,7 +435,7 @@
       (let [state {:edit/editing-item-index nil
                    :app/item-filter :filter/all
                    :app/todo-items [{:item/title "Test Item" :item/completed false}]
-                   :app/mark-all-state false}
+                   :app/mark-all-checkbox-checked? false}
             item (first (:app/todo-items state))
             view (sut/item-view state 0 item)]
         (is (false? (-> (select-attribute :input.toggle [:checked] view) first))
@@ -444,14 +444,14 @@
               {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
           (is (true? (-> new-state :app/todo-items first :item/completed))
               "it marks the item as completed")
-          (is (true? (:app/mark-all-state new-state))
+          (is (true? (:app/mark-all-checkbox-checked? new-state))
               "it updates the mark-all state to true"))))
 
     (testing "completed item"
       (let [state {:edit/editing-item-index nil
                    :app/item-filter :filter/all
                    :app/todo-items [{:item/title "Test Item" :item/completed true}]
-                   :app/mark-all-state true}
+                   :app/mark-all-checkbox-checked? true}
             item (first (:app/todo-items state))
             view (sut/item-view state 0 item)]
         (is (true? (-> (select-attribute :input.toggle [:checked] view) first))
@@ -460,14 +460,14 @@
               {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
           (is (false? (-> new-state :app/todo-items first :item/completed))
               "it marks the item as not completed")
-          (is (false? (:app/mark-all-state new-state))
+          (is (false? (:app/mark-all-checkbox-checked? new-state))
               "it updates the mark-all state to false")))))
 
   (testing "delete button"
     (let [state {:app/item-filter :filter/all
                  :app/todo-items [{:item/title "Test Item"
                                    :item/completed true}]
-                 :app/mark-all-state true}
+                 :app/mark-all-checkbox-checked? true}
           item (first (:app/todo-items state))
           view (sut/item-view state 0 item)
           on-click-actions (select-actions :button.destroy [:on :click] view)
@@ -476,14 +476,14 @@
           "it removes the item from the todo list")
       (is (empty? effects)
           "it does so without other side-effects")
-      (is (false? (:app/mark-all-state new-state))
+      (is (false? (:app/mark-all-checkbox-checked? new-state))
           "it updates the mark-all state to false"))
 
     (let [state {:app/item-filter :filter/all
                  :app/todo-items [{:item/title "Test Item 1" :item/completed true}
                                   {:item/title "Test Item 2" :item/completed false}
                                   {:item/title "Test Item 3" :item/completed true}]
-                 :app/mark-all-state false}
+                 :app/mark-all-checkbox-checked? false}
           item (second (:app/todo-items state))
           view (sut/item-view state 1 item)
           on-click-actions (select-actions :button.destroy [:on :click] view)
@@ -492,14 +492,14 @@
           "it removes the item from the todo list")
       (is (empty? effects)
           "it does so without other side-effects")
-      (is (true? (:app/mark-all-state new-state))
+      (is (true? (:app/mark-all-checkbox-checked? new-state))
           "it updates mark-all state to true when all remaining items are completed"))
 
     (let [state {:app/item-filter :filter/all
                  :app/todo-items [{:item/title "Test Item 1" :item/completed false}
                                   {:item:title "Test Item 2" :item/completed true}
                                   {:item:title "Test Item 3" :item/completed false}]
-                 :app/mark-all-state false}
+                 :app/mark-all-checkbox-checked? false}
           item (second (:app/todo-items state))
           view (sut/item-view state 1 item)
           on-click-actions (select-actions :button.destroy [:on :click] view)
@@ -508,14 +508,14 @@
           "it removes the item from the todo list")
       (is (empty? effects)
           "it does so without other side-effects")
-      (is (false? (:app/mark-all-state new-state))
+      (is (false? (:app/mark-all-checkbox-checked? new-state))
           "it keeps the mark-all state false when all remaining items are uncompleted"))
 
     (let [state {:app/item-filter :filter/all
                  :app/todo-items [{:item/title "Test Item 1" :item/completed true}
                                   {:item:title "Test Item 2" :item/completed false}
                                   {:item:title "Test Item 3" :item/completed true}]
-                 :app/mark-all-state false}
+                 :app/mark-all-checkbox-checked? false}
           item (second (:app/todo-items state))
           view (sut/item-view state 1 item)
           on-click-actions (select-actions :button.destroy [:on :click] view)
@@ -524,7 +524,7 @@
           "it removes the item from the todo list")
       (is (empty? effects)
           "it does so without other side-effects")
-      (is (true? (:app/mark-all-state new-state))
+      (is (true? (:app/mark-all-checkbox-checked? new-state))
           "it updates the mark-all state false when some remaining items are completed and some are uncompleted"))))
 
 (deftest app-view
