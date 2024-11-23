@@ -26,14 +26,14 @@
 
 (defn- get-mark-all-as-state [items]
   (let [as-state (if (and (seq items)
-                          (every? :item/completed items))
+                          (every? :item/completed? items))
                    false
-                   (every? :item/completed (filter :item/completed items)))]
+                   (every? :item/completed? (filter :item/completed? items)))]
     as-state))
 
 (defn- mark-items-as [items completed?]
   (mapv (fn [item]
-          (assoc item :item/completed completed?))
+          (assoc item :item/completed? completed?))
         items))
 
 (defn- end-editing [{:keys [app/todo-items] :as state} keyup-code draft index]

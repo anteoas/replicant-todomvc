@@ -12,7 +12,7 @@
     (let [result (sut/maybe-add [] "New item")]
       (is (= 1 (count result)))
       (is (= "New item" (:item/title (first result))))
-      (is (false? (:item/completed (first result))))
+      (is (false? (:item/completed? (first result))))
       (is (uuid? (:item/id (first result))))))
 
   (testing "it should not add a new item when the string is empty"
@@ -264,21 +264,21 @@
     (doseq [[input input-behaviour] [["" "it removes the item if the input is empty"]
                                      ["  " "it removes the item if the trimmed input is empty"]]
             completed-item {:item/title "Title2"
-                            :item/completed true}
+                            :item/completed? true}
             uncompleted-item {:item/title "Title2"
-                              :item/completed false}
+                              :item/completed? false}
             [items mark-all-state items-behaviour] [[[{:item/title "Title1"
-                                                       :item/completed false}
+                                                       :item/completed? false}
                                                       completed-item
                                                       {:item/title "Title3"
-                                                       :item/completed false}]
+                                                       :item/completed? false}]
                                                      false
                                                      "it sets the mark-all state to false if the remaining items are uncompleted"]
                                                     [[{:item/title "Title1"
-                                                       :item/completed true}
+                                                       :item/completed? true}
                                                       uncompleted-item
                                                       {:item/title "Title3"
-                                                       :item/completed true}]
+                                                       :item/completed? true}]
                                                      true
                                                      "it sets the mark-all state to true if the remaining items are completed"]]]
       (let [initial-state {:edit/editing-item-index 1
@@ -315,12 +315,12 @@
       ;   * The state captured at unmounting the view _had_ an `:edit/keyup-code "Escape"` entry,
       ;     and this should cause the indexed todo item to be left unchanged
       (let [item {:item/title "Title2"
-                  :item/completed true}
+                  :item/completed? true}
             initial-items [{:item/title "Title1"
-                            :item/completed false}
+                            :item/completed? false}
                            item
                            {:item/title "Title3"
-                            :item/completed false}]
+                            :item/completed? false}]
             rendering-state {:edit/editing-item-index 1
                              :edit/keyup-code "KeyT" ; Doesn't matter, but if the "t" in "Input" was typed last...
                              :edit/draft "Input"
@@ -356,27 +356,27 @@
     (testing "filtering"
       (is (not= nil?
                 (sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
-                                                                 :item/completed true}))
+                                                                 :item/completed? true}))
           "it renders a completed item when filtering on all")
       (is (not= nil?
                 (sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
-                                                                 :item/completed false}))
+                                                                 :item/completed? false}))
           "it renders an uncompleted item when filtering on all")
       (is (nil?
            (sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
-                                                                  :item/completed false}))
+                                                                  :item/completed? false}))
           "it does not render an uncompleted item when filtering on completed")
       (is (not= nil?
                 (sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
-                                                                       :item/completed true}))
+                                                                       :item/completed? true}))
           "it renders a completed items when filtering on completed")
       (is (nil?
            (sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
-                                                               :item/completed true}))
+                                                               :item/completed? true}))
           "it does not render a completed item when filtering on active")
       (is (not= nil?
                 (sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
-                                                                    :item/completed false}))
+                                                                    :item/completed? false}))
           "it renders an uncompleted item when filtering on active"))
 
     (testing "editing"
@@ -408,14 +408,14 @@
       (is (some #{"completed"}
                 (->> (sut/item-view {:app/item-filter :filter/all}
                                     0 {:item/title "Test Item"
-                                       :item/completed true})
+                                       :item/completed? true})
                      (select-attribute :li [:class])
                      first))
           "The item should have the 'completed' class when it is completed")
       (is (not-any? #{"completed"}
                     (->> (sut/item-view {:app/item-filter :filter/all}
                                         0 {:item/title "Test Item"
-                                           :item/completed false})
+                                           :item/completed? false})
                          (select-attribute :li [:class])
                          first))
           "The item should not have the 'completed' class when it is uncompleted")))
@@ -423,7 +423,7 @@
   (testing "it triggers the correct actions on double-click"
     (let [state {:app/item-filter :filter/all}
           item {:item/title "Test Item"
-                :item/completed false}
+                :item/completed? false}
           view (sut/item-view state 0 item)
           on-dblclick-actions (select-actions :li [:on :dblclick] view)]
       (is (seq on-dblclick-actions) "Double-clicking the item should trigger the correct actions")
@@ -434,7 +434,7 @@
     (testing "uncompleted item"
       (let [state {:edit/editing-item-index nil
                    :app/item-filter :filter/all
-                   :app/todo-items [{:item/title "Test Item" :item/completed false}]
+                   :app/todo-items [{:item/title "Test Item" :item/completed? false}]
                    :app/mark-all-checkbox-checked? false}
             item (first (:app/todo-items state))
             view (sut/item-view state 0 item)]
@@ -442,7 +442,7 @@
             "it is not checked initially")
         (let [on-change-actions (select-actions :input.toggle [:on :change] view)
               {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
-          (is (true? (-> new-state :app/todo-items first :item/completed))
+          (is (true? (-> new-state :app/todo-items first :item/completed?))
               "it marks the item as completed")
           (is (true? (:app/mark-all-checkbox-checked? new-state))
               "it updates the mark-all state to true"))))
@@ -450,7 +450,7 @@
     (testing "completed item"
       (let [state {:edit/editing-item-index nil
                    :app/item-filter :filter/all
-                   :app/todo-items [{:item/title "Test Item" :item/completed true}]
+                   :app/todo-items [{:item/title "Test Item" :item/completed? true}]
                    :app/mark-all-checkbox-checked? true}
             item (first (:app/todo-items state))
             view (sut/item-view state 0 item)]
@@ -458,7 +458,7 @@
             "it is checked initially")
         (let [on-change-actions (select-actions :input.toggle [:on :change] view)
               {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
-          (is (false? (-> new-state :app/todo-items first :item/completed))
+          (is (false? (-> new-state :app/todo-items first :item/completed?))
               "it marks the item as not completed")
           (is (false? (:app/mark-all-checkbox-checked? new-state))
               "it updates the mark-all state to false")))))
@@ -466,7 +466,7 @@
   (testing "delete button"
     (let [state {:app/item-filter :filter/all
                  :app/todo-items [{:item/title "Test Item"
-                                   :item/completed true}]
+                                   :item/completed? true}]
                  :app/mark-all-checkbox-checked? true}
           item (first (:app/todo-items state))
           view (sut/item-view state 0 item)
@@ -480,9 +480,9 @@
           "it updates the mark-all state to false"))
 
     (let [state {:app/item-filter :filter/all
-                 :app/todo-items [{:item/title "Test Item 1" :item/completed true}
-                                  {:item/title "Test Item 2" :item/completed false}
-                                  {:item/title "Test Item 3" :item/completed true}]
+                 :app/todo-items [{:item/title "Test Item 1" :item/completed? true}
+                                  {:item/title "Test Item 2" :item/completed? false}
+                                  {:item/title "Test Item 3" :item/completed? true}]
                  :app/mark-all-checkbox-checked? false}
           item (second (:app/todo-items state))
           view (sut/item-view state 1 item)
@@ -496,9 +496,9 @@
           "it updates mark-all state to true when all remaining items are completed"))
 
     (let [state {:app/item-filter :filter/all
-                 :app/todo-items [{:item/title "Test Item 1" :item/completed false}
-                                  {:item:title "Test Item 2" :item/completed true}
-                                  {:item:title "Test Item 3" :item/completed false}]
+                 :app/todo-items [{:item/title "Test Item 1" :item/completed? false}
+                                  {:item:title "Test Item 2" :item/completed? true}
+                                  {:item:title "Test Item 3" :item/completed? false}]
                  :app/mark-all-checkbox-checked? false}
           item (second (:app/todo-items state))
           view (sut/item-view state 1 item)
@@ -512,9 +512,9 @@
           "it keeps the mark-all state false when all remaining items are uncompleted"))
 
     (let [state {:app/item-filter :filter/all
-                 :app/todo-items [{:item/title "Test Item 1" :item/completed true}
-                                  {:item:title "Test Item 2" :item/completed false}
-                                  {:item:title "Test Item 3" :item/completed true}]
+                 :app/todo-items [{:item/title "Test Item 1" :item/completed? true}
+                                  {:item:title "Test Item 2" :item/completed? false}
+                                  {:item:title "Test Item 3" :item/completed? true}]
                  :app/mark-all-checkbox-checked? false}
           item (second (:app/todo-items state))
           view (sut/item-view state 1 item)
