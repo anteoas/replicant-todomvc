@@ -420,15 +420,20 @@
                          first))
           "The item should not have the 'completed' class when it is uncompleted")))
 
-  (testing "it triggers the correct actions on double-click"
-    (let [state {:app/item-filter :filter/all}
+  (testing "enabling editing mode"
+    (let [index 0
+          state {:app/item-filter :filter/all}
           item {:item/title "Test Item"
                 :item/completed? false}
-          view (sut/item-view state 0 item)
-          on-dblclick-actions (select-actions :li [:on :dblclick] view)]
-      (is (seq on-dblclick-actions) "Double-clicking the item should trigger the correct actions")
-      ;; Check that the correct actions are triggered
-      ))
+          view (sut/item-view state index item)
+          on-dblclick-actions (select-actions :li [:on :dblclick] view)
+          {:keys [new-state]} (a/handle-actions state {} on-dblclick-actions)]
+      (is (= index
+             (:edit/editing-item-index new-state))
+          "it enables editing mode for the item")
+      (is (= (:item/title item)
+             (:edit/draft new-state))
+          "it sets the draft to the item title")))
 
   (testing "the toggle checkbox"
     (testing "uncompleted item"
