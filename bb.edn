@@ -1,4 +1,4 @@
-{:paths ["." "scripts"]
+{:paths ["scripts"]
  :tasks {:requires ([tasks :as t])
 
          dev:build-inspector-extension
