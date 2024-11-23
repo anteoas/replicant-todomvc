@@ -431,42 +431,101 @@
       ))
 
   (testing "the toggle checkbox"
-    (let [state {:edit/editing-item-index nil
-                 :app/item-filter :filter/all
-                 :app/todo-items [{:item/title "Test Item" :item/completed false}]}
-          item (first (:app/todo-items state))
-          view (sut/item-view state 0 item)]
-      (is (false? (-> (select-attribute :input.toggle [:checked] view) first))
-          "The checkbox should not be checked initially")
-      (let [on-change-actions (select-actions :input.toggle [:on :change] view)
-            {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
-        (is (true? (-> new-state :app/todo-items first :item/completed))
-            "Changing the checkbox should mark the item as completed")))
+    (testing "uncompleted item"
+      (let [state {:edit/editing-item-index nil
+                   :app/item-filter :filter/all
+                   :app/todo-items [{:item/title "Test Item" :item/completed false}]
+                   :app/mark-all-state false}
+            item (first (:app/todo-items state))
+            view (sut/item-view state 0 item)]
+        (is (false? (-> (select-attribute :input.toggle [:checked] view) first))
+            "it is not checked initially")
+        (let [on-change-actions (select-actions :input.toggle [:on :change] view)
+              {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
+          (is (true? (-> new-state :app/todo-items first :item/completed))
+              "it marks the item as completed")
+          (is (true? (:app/mark-all-state new-state))
+              "it updates the mark-all state to true"))))
 
-    (let [state {:edit/editing-item-index nil
-                 :app/item-filter :filter/all
-                 :app/todo-items [{:item/title "Test Item" :item/completed true}]}
-          item (first (:app/todo-items state))
-          view (sut/item-view state 0 item)]
-      (is (true? (-> (select-attribute :input.toggle [:checked] view) first))
-          "The checkbox should be checked initially")
-      (let [on-change-actions (select-actions :input.toggle [:on :change] view)
-            {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
-        (is (false? (-> new-state :app/todo-items first :item/completed))
-            "Unchecking the checkbox should mark the item as not completed"))))
+    (testing "completed item"
+      (let [state {:edit/editing-item-index nil
+                   :app/item-filter :filter/all
+                   :app/todo-items [{:item/title "Test Item" :item/completed true}]
+                   :app/mark-all-state true}
+            item (first (:app/todo-items state))
+            view (sut/item-view state 0 item)]
+        (is (true? (-> (select-attribute :input.toggle [:checked] view) first))
+            "it is checked initially")
+        (let [on-change-actions (select-actions :input.toggle [:on :change] view)
+              {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
+          (is (false? (-> new-state :app/todo-items first :item/completed))
+              "it marks the item as not completed")
+          (is (false? (:app/mark-all-state new-state))
+              "it updates the mark-all state to false")))))
 
   (testing "delete button"
     (let [state {:app/item-filter :filter/all
                  :app/todo-items [{:item/title "Test Item"
-                                   :item/completed false}]}
+                                   :item/completed true}]
+                 :app/mark-all-state true}
           item (first (:app/todo-items state))
           view (sut/item-view state 0 item)
           on-click-actions (select-actions :button.destroy [:on :click] view)
           {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
       (is (empty? (:app/todo-items new-state))
-          "Clicking the delete button should remove the item from the todo list")
+          "it removes the item from the todo list")
       (is (empty? effects)
-          "it does so without other side-effects"))))
+          "it does so without other side-effects")
+      (is (false? (:app/mark-all-state new-state))
+          "it updates the mark-all state to false"))
+
+    (let [state {:app/item-filter :filter/all
+                 :app/todo-items [{:item/title "Test Item 1" :item/completed true}
+                                  {:item/title "Test Item 2" :item/completed false}
+                                  {:item/title "Test Item 3" :item/completed true}]
+                 :app/mark-all-state false}
+          item (second (:app/todo-items state))
+          view (sut/item-view state 1 item)
+          on-click-actions (select-actions :button.destroy [:on :click] view)
+          {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
+      (is (= 2 (count (:app/todo-items new-state)))
+          "it removes the item from the todo list")
+      (is (empty? effects)
+          "it does so without other side-effects")
+      (is (true? (:app/mark-all-state new-state))
+          "it updates mark-all state to true when all remaining items are completed"))
+
+    (let [state {:app/item-filter :filter/all
+                 :app/todo-items [{:item/title "Test Item 1" :item/completed false}
+                                  {:item:title "Test Item 2" :item/completed true}
+                                  {:item:title "Test Item 3" :item/completed false}]
+                 :app/mark-all-state false}
+          item (second (:app/todo-items state))
+          view (sut/item-view state 1 item)
+          on-click-actions (select-actions :button.destroy [:on :click] view)
+          {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
+      (is (= 2 (count (:app/todo-items new-state)))
+          "it removes the item from the todo list")
+      (is (empty? effects)
+          "it does so without other side-effects")
+      (is (false? (:app/mark-all-state new-state))
+          "it keeps the mark-all state false when all remaining items are uncompleted"))
+
+    (let [state {:app/item-filter :filter/all
+                 :app/todo-items [{:item/title "Test Item 1" :item/completed true}
+                                  {:item:title "Test Item 2" :item/completed false}
+                                  {:item:title "Test Item 3" :item/completed true}]
+                 :app/mark-all-state false}
+          item (second (:app/todo-items state))
+          view (sut/item-view state 1 item)
+          on-click-actions (select-actions :button.destroy [:on :click] view)
+          {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
+      (is (= 2 (count (:app/todo-items new-state)))
+          "it removes the item from the todo list")
+      (is (empty? effects)
+          "it does so without other side-effects")
+      (is (true? (:app/mark-all-state new-state))
+          "it updates the mark-all state false when some remaining items are completed and some are uncompleted"))))
 
 (deftest app-view
   (testing "it shows a `.todoapp` element"
