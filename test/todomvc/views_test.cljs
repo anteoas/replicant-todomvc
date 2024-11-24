@@ -3,6 +3,7 @@
    [clojure.test :refer [deftest is testing]]
    [lookup.core :as l]
    [todomvc.actions :as a]
+   [todomvc.test-reporter]
    [todomvc.views :as sut]
    [clojure.string :as string]))
 
@@ -311,7 +312,7 @@
                (:app/mark-all-checkbox-checked? new-state))
             items-behaviour)))
 
-    (testing "It does not update the item when Escape has been pressed"
+    (testing "Escape key"
       ; Notes:
       ; :app/mark-all-state
       ;   * The initial states has no :app/mark-all-state key, even though in “reality” it would have
