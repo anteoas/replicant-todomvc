@@ -248,8 +248,8 @@
           "it prevents the default form submission")))
 
   (testing "end editing"
-    (doseq [[input behaviour] [["Input" "it updates the item title"]
-                               ["  Input  " "it trims the input"]]]
+    (doseq [[input trim-case] [["Input" "no trimming needed"]
+                               ["  Input  " "trimming needed"]]]
       (let [item {:item/title "Title"}
             initial-state {:edit/editing-item-index 0
                            :edit/draft input
@@ -259,37 +259,24 @@
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
                                                           on-unmount-actions)]
-        (is (= (string/trim input)
-               (-> new-state :app/todo-items first :item/title))
-            behaviour)
-        (is (nil? (:edit/editing-item-index new-state))
-            "it removes the editing index")
-        (is (nil? (:edit/keyup-code new-state))
-            "it removes the keycode")
-        (is (empty? effects)
-            "it does not have other side-effects")))
+        (testing trim-case
+         (is (= (string/trim input)
+                (-> new-state :app/todo-items first :item/title))
+             "it updates the item title correctly")
+          (is (nil? (:edit/editing-item-index new-state))
+              "it removes the editing index")
+          (is (nil? (:edit/keyup-code new-state))
+              "it removes the keycode")
+          (is (empty? effects)
+              "it does not have other side-effects"))))
 
-    (doseq [[input input-behaviour] [["" "it removes the item if the input is empty"]
-                                     ["  " "it removes the item if the trimmed input is empty"]]
-            completed-item {:item/title "Title2"
-                            :item/completed? true}
-            uncompleted-item {:item/title "Title2"
-                              :item/completed? false}
-            [items mark-all-state items-behaviour] [[[{:item/title "Title1"
-                                                       :item/completed? false}
-                                                      completed-item
-                                                      {:item/title "Title3"
-                                                       :item/completed? false}]
-                                                     false
-                                                     "it sets the mark-all state to false if the remaining items are uncompleted"]
-                                                    [[{:item/title "Title1"
-                                                       :item/completed? true}
-                                                      uncompleted-item
-                                                      {:item/title "Title3"
-                                                       :item/completed? true}]
-                                                     true
-                                                     "it sets the mark-all state to true if the remaining items are completed"]]]
-      (let [initial-state {:edit/editing-item-index 1
+    (doseq [[input input-case] [["" "Remove empty"]
+                                ["  " "Remove blank"]]]
+      (let [item {:item/title "Title2"}
+            items [{:item/title "Title1"}
+                   item
+                   {:item/title "Title3"}]
+            initial-state {:edit/editing-item-index 1
                            :edit/keyup-code "Enter"
                            :edit/draft input
                            :app/todo-items items}
@@ -298,18 +285,51 @@
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
                                                           on-unmount-actions)]
-        (is (= [(first items) (last items)]
-               (:app/todo-items new-state))
-            input-behaviour)
-        (is (nil? (:edit/editing-item-index new-state))
-            "it removes the editing index")
-        (is (nil? (:edit/keyup-code new-state))
-            "it removes the keycode")
-        (is (empty? effects)
-            "it does not have other side-effects")
-        (is (= mark-all-state
-               (:app/mark-all-checkbox-checked? new-state))
-            items-behaviour)))
+        (testing input-case
+          (is (= [(first items) (last items)]
+                 (:app/todo-items new-state))
+              "it removes the item")
+          (is (nil? (:edit/editing-item-index new-state))
+              "it removes the editing index")
+          (is (nil? (:edit/keyup-code new-state))
+              "it removes the keycode")
+          (is (empty? effects)
+              "it does not have other side-effects"))))
+
+    (let [completed-item {:item/title "Title2"
+                          :item/completed? true}
+          uncompleted-item {:item/title "Title2"
+                            :item/completed? false}]
+      (doseq [[items mark-all-state mark-all-case items-behaviour] [[[{:item/title "Title1"
+                                                                       :item/completed? false}
+                                                                      completed-item
+                                                                      {:item/title "Title3"
+                                                                       :item/completed? false}]
+                                                                     false
+                                                                     "remaining items are uncompleted"
+                                                                     "it sets the mark-all state to false"]
+                                                                    [[{:item/title "Title1"
+                                                                       :item/completed? true}
+                                                                      uncompleted-item
+                                                                      {:item/title "Title3"
+                                                                       :item/completed? true}]
+                                                                     true
+                                                                     "remaining items are completed"
+                                                                     "it sets the mark-all state to true"]]]
+        (let [input ""
+              initial-state {:edit/editing-item-index 1
+                             :edit/keyup-code "Enter"
+                             :edit/draft input
+                             :app/todo-items items}
+              on-unmount-actions (->> (sut/edit-view initial-state 1 (second items))
+                                      (select-actions :form [:replicant/on-unmount]))
+              {:keys [new-state]} (a/handle-actions initial-state
+                                                            {}
+                                                            on-unmount-actions)]
+          (testing mark-all-case
+            (is (= mark-all-state
+                   (:app/mark-all-checkbox-checked? new-state))
+                items-behaviour)))))
 
     (testing "Escape key"
       ; Notes:
