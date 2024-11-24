@@ -3,7 +3,6 @@
    [clojure.test :refer [deftest is testing]]
    [lookup.core :as l]
    [todomvc.actions :as a]
-   [todomvc.test-reporter]
    [todomvc.views :as sut]
    [clojure.string :as string]))
 
