@@ -11,9 +11,9 @@
          :output-to "out/tests.js"
          :ns-regexp "-test$"
          :autorun   true
-         :devtools {:preloads [todomvc.test-reporter]}}
+         :main todomvc.test-reporter/main}
 
   :test-compile {:target    :node-test
                  :output-to "out/tests.js"
                  :ns-regexp "-test$"
-                 :devtools {:preloads [todomvc.test-reporter]}}}}
+                 :main todomvc.test-reporter/main}}}

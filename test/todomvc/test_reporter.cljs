@@ -1,5 +1,6 @@
 (ns todomvc.test-reporter
-  (:require [cljs.test]))
+  (:require [cljs.test]
+            [shadow.test.node]))
 
 (defn- bold [text]
   (str "\033[1m" text "\033[22m"))
@@ -58,3 +59,6 @@
 (defmethod cljs.test/report [:cljs.test/default :error] [m]
   (report-test m {:color red :bullet "✗" :bullet-color red})
   (original-error m))
+
+(defn main [& args]
+  (apply shadow.test.node/main args))
