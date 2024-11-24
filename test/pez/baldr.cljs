@@ -1,6 +1,6 @@
-(ns todomvc.test-reporter
+(ns pez.baldr
   (:require [cljs.test]
-            [shadow.test.node]))
+            [clojure.string :as string]))
 
 (defn- bold [text]
   (str "\033[1m" text "\033[22m"))
@@ -15,7 +15,8 @@
   (str "\033[31m" text "\033[39m"))
 
 (def ^:private initial-state {:level 0
-                              :seen-context nil})
+                              :seen-context nil
+                              :failure-prints []})
 
 (defonce ^:private !state (atom initial-state))
 
@@ -25,7 +26,7 @@
 (defn- set-state-from-env! []
   (let [contexts (:testing-contexts (cljs.test/get-current-env))]
     (swap! !state assoc
-           :level (count contexts)
+           :level (+ 1 (count contexts))
            :seen-context contexts)))
 
 (defn- report-test [m {:keys[color bullet bullet-color]}]
@@ -40,10 +41,15 @@
                   (str (bullet-color bullet) " " (color message))))))
 
 (defmethod cljs.test/report [:cljs.test/default :begin-test-var] [_m]
-  (reset! !state initial-state))
+  (swap! !state merge (select-keys initial-state [:level :seen-context])))
 
-(defmethod cljs.test/report [:cljs.test/default :end-test-ns] [_m]
-  (reset! !state initial-state))
+(def ^:private original-summary (get-method cljs.test/report [:cljs.test/default :summary]))
+(defmethod cljs.test/report [:cljs.test/default :summary] [m]
+  (println)
+  (doseq [[i failure-print] (map-indexed vector (:failure-prints @!state))]
+    (println (red (str (inc i) ") " (string/trim failure-print)))))
+  (reset! !state initial-state)
+  (original-summary m))
 
 (def ^:private original-pass (get-method cljs.test/report [:cljs.test/default :pass]))
 (defmethod cljs.test/report [:cljs.test/default :pass] [m]
@@ -52,13 +58,16 @@
 
 (def ^:private original-fail (get-method cljs.test/report [:cljs.test/default :fail]))
 (defmethod cljs.test/report [:cljs.test/default :fail] [m]
-  (report-test m {:color red :bullet "✗" :bullet-color red})
-  (original-fail m))
+  (let [failure-printout (with-out-str (original-fail m))]
+    (swap! !state update :failure-prints conj failure-printout))
+  (report-test m {:color red :bullet (str (count (:failure-prints @!state)) ")") :bullet-color red}))
 
 (def ^:private original-error (get-method cljs.test/report [:cljs.test/default :error]))
 (defmethod cljs.test/report [:cljs.test/default :error] [m]
-  (report-test m {:color red :bullet "✗" :bullet-color red})
-  (original-error m))
+  (let [error-printout (with-out-str (original-error m))]
+    (swap! !state update :failure-prints conj error-printout))
+  (report-test m {:color red :bullet (str (count (:failure-prints @!state)) ")") :bullet-color red}))
 
-(defn main [& args]
-  (apply shadow.test.node/main args))
+(defmethod cljs.test/report [:cljs.test/default :begin-test-var] [m]
+  (println (str (indent 1) (map #(:name (meta %)) (:testing-vars (cljs.test/get-current-env))))))
+

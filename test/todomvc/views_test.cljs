@@ -267,8 +267,10 @@
               "it removes the editing index")
           (is (nil? (:edit/keyup-code new-state))
               "it removes the keycode")
-          (is (empty? effects)
-              "it does not have other side-effects"))))
+          (is (seq effects)
+              "it does not have other side-effects")
+          (is (= 0 (throw (ex-info "This is an expected exception" {})))
+              "it throws an exception"))))
 
     (doseq [[input input-case] [["" "Remove empty"]
                                 ["  " "Remove blank"]]]
