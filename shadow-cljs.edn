@@ -10,7 +10,8 @@
   :test {:target    :node-test
          :output-to "out/tests.js"
          :ns-regexp "-test$"
-         :autorun   true}
+         :autorun   true
+         :devtools {:preloads [todomvc.test-reporter]}}
 
   :test-compile {:target    :node-test
                  :output-to "out/tests.js"

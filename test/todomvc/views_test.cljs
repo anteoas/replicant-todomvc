@@ -157,7 +157,7 @@
   (testing "rendering the edit view"
     (let [initial-state {:edit/editing-item-index 0}
           edit-view (sut/edit-view initial-state 0 {})]
-      (is (l/select :input.edit edit-view)
+      (is (seq (l/select :input.edit edit-view))
           "it renders the edit view when the index matches the editing item index"))
 
     (let [initial-state {}
@@ -311,7 +311,7 @@
                (:app/mark-all-checkbox-checked? new-state))
             items-behaviour)))
 
-    (testing "It does not update the item when Escape has been pressed"
+    (testing "Escape key"
       ; Notes:
       ; :app/mark-all-state
       ;   * The initial states has no :app/mark-all-state key, even though in “reality” it would have
