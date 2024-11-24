@@ -158,7 +158,7 @@
   (testing "rendering the edit view"
     (let [initial-state {:edit/editing-item-index 0}
           edit-view (sut/edit-view initial-state 0 {})]
-      (is (seq (l/select :input.edits edit-view))
+      (is (seq (l/select :input.edit edit-view))
           "it renders the edit view when the index matches the editing item index"))
 
     (let [initial-state {}
