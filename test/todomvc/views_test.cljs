@@ -572,14 +572,6 @@
             "it updates the mark-all state false when some remaining items are completed and some are uncompleted")))))
 
 (deftest app-view
-  (is (every? (partial some #{[:dom/ax.prevent-default]})
-              (->> (sut/app-view {:app/todo-items [{:item/title "First item"}]
-                                  :edit/editing-item-index 0
-                                  :app/item-filter :filter/all})
-                   (select-attribute 'form [:on :submit])
-                   (map set)))
-      "all form-submits have a prevent-default action")
-
   (testing ".todoapp element"
     (is (seq (l/select '.todoapp (sut/app-view {})))
         "it shows a `.todoapp` element")
@@ -614,4 +606,13 @@
     (is (empty? (l/select '[.todoapp .footer] (sut/app-view {})))
         "it has no `.footer` when there are no items")
     (is (seq (l/select '[.todoapp .footer] (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
-        "it has a `.footer` when there are items")))
+        "it has a `.footer` when there are items"))
+
+  (testing "Prevent default"
+    (is (every? (partial some #{[:dom/ax.prevent-default]})
+                (->> (sut/app-view {:app/todo-items [{:item/title "First item"}]
+                                    :edit/editing-item-index 0
+                                    :app/item-filter :filter/all})
+                     (select-attribute 'form [:on :submit])
+                     (map set)))
+        "all form-submits have a prevent-default action")))
