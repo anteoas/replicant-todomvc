@@ -5,15 +5,14 @@
  {:app {:target :browser
         :output-dir "js/compiled"
         :asset-path "/js/compiled"
-        :modules {:main {:init-fn todomvc.app/init!}}}
+        :modules {:main {:init-fn todomvc.app/init!}}
+        :devtools {:preloads [pez.baldr]}}
 
   :test {:target    :node-test
          :output-to "out/tests.js"
          :ns-regexp "-test$"
-         :autorun   true
-         :main todomvc.test-reporter/main}
+         :autorun   true}
 
   :test-compile {:target    :node-test
                  :output-to "out/tests.js"
-                 :ns-regexp "-test$"
-                 :main todomvc.test-reporter/main}}}
+                 :ns-regexp "-test$"}}}
