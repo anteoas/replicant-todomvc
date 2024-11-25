@@ -24,36 +24,41 @@
         "it is true when items list is empty")))
 
 (deftest handle-action-set-mark-all-state
-  (testing "it should set mark-all-state to true when all items are completed"
-    (let [state {:app/todo-items [{:item/completed? true}
-                                  {:item/completed? true}]}]
-      (is (true?
-           (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
-               :new-state
-               :app/mark-all-checkbox-checked?)))))
+  (testing "Mark-all state"
+    (is (true?
+         (-> (sut/handle-action {:app/todo-items [{:item/completed? true}
+                                                  {:item/completed? true}]}
+                                {}
+                                [:app/ax.set-mark-all-state])
+             :new-state
+             :app/mark-all-checkbox-checked?))
+        "it sets the mark-all-checkbox to checked when all items are completed")
 
-  (testing "it should set mark-all-state to false when some items are not completed"
-    (let [state {:app/todo-items [{:item/completed? true}
-                                  {:item/completed? false}]}]
-      (is (false?
-           (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
-               :new-state
-               :app/mark-all-checkbox-checked?))))
+    (is (false?
+         (-> (sut/handle-action {:app/todo-items [{:item/completed? true}
+                                                  {:item/completed? false}]}
+                                {}
+                                [:app/ax.set-mark-all-state])
+             :new-state
+             :app/mark-all-checkbox-checked?))
+        "it sets the mark-all-checkbox to unchecked when some items are not completed")
 
-    (testing "it should set mark-all-state to false when all items are not completed"
-      (let [state {:app/todo-items [{:item/completed? false}
-                                    {:item/completed? false}]}]
-        (is (false?
-             (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
-                 :new-state
-                 :app/mark-all-checkbox-checked?))))))
+    (is (false?
+         (-> (sut/handle-action {:app/todo-items [{:item/completed? false}
+                                                  {:item/completed? false}]}
+                                {}
+                                [:app/ax.set-mark-all-state])
+             :new-state
+             :app/mark-all-checkbox-checked?))
+        "it sets the mark-all-checkbox to unchecked when no items are completed")
 
-  (testing "it should set mark-all-state to false when items list is empty"
-    (let [state {:app/todo-items []}]
-      (is (false?
-           (-> (sut/handle-action state {} [:app/ax.set-mark-all-state])
-               :new-state
-               :app/mark-all-checkbox-checked?))))))
+    (is (false?
+         (-> (sut/handle-action {:app/todo-items []}
+                                {}
+                                [:app/ax.set-mark-all-state])
+             :new-state
+             :app/mark-all-checkbox-checked?))
+        "it sets the mark-all-checkbox to unchecked when there are no items")))
 
 
 (deftest handle-action-mark-all-items-as
