@@ -18,7 +18,7 @@
   (str "\033[31m" text "\033[39m"))
 
 (def ^:private initial-state {:level 0
-                              :seen-context nil
+                              :contexts nil
                               :failure-prints []})
 
 (defonce ^:private !state (atom initial-state))
@@ -30,21 +30,22 @@
   (let [contexts (:testing-contexts (cljs.test/get-current-env))]
     (swap! !state assoc
            :level (+ 1 (count contexts))
-           :seen-context contexts)))
+           :contexts contexts)))
 
 (defn- report-test [m {:keys[color bullet bullet-color]}]
-  (let [seen-context (:seen-context @!state)
+  (let [seen-contexts (:contexts @!state)
         message (or (:message m) (pr-str (:expected m)))]
     (set-state-from-env!)
-    (let [context (:seen-context @!state)]
-      (when (and context (not= seen-context context))
+    (let [contexts (:contexts @!state)]
+      (when (and (not= seen-contexts contexts)
+                 (seq contexts))
         (println (str (indent (:level @!state))
-                    (bold (first context))))))
+                    (bold (first contexts))))))
     (println (str (indent (inc (:level @!state)))
                   (str (bullet-color bullet) " " (color message))))))
 
 (defmethod cljs.test/report [:cljs.test/default :begin-test-var] [_m]
-  (swap! !state merge (select-keys initial-state [:level :seen-context])))
+  (swap! !state merge (select-keys initial-state [:level :contexts])))
 
 (def ^:private original-summary (get-method cljs.test/report [:cljs.test/default :summary]))
 (defmethod cljs.test/report [:cljs.test/default :summary] [m]
