@@ -22,6 +22,14 @@
    ```"
   [object path]
   (reduce (fn [acc k]
-            (some-> acc (unchecked-get k)))
+            (some-> acc #?(:cljs (unchecked-get k)
+                           :clj (get k))))
           object
           path))
+
+(defn ->js
+  "Converts a Clojure map to a JavaScript object.
+   Unless we're on the JVM, where we just return the map."
+  [m]
+  #?(:cljs (clj->js m)
+     :clj m))

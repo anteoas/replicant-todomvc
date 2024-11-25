@@ -94,26 +94,14 @@
 (defn handle-actions [state replicant-data actions]
   (reduce (fn [{state :new-state :as acc} action]
             (let [{:keys [new-state effects]} (handle-action state replicant-data action)]
-              (when (and js/goog.DEBUG
-                         (exists? js/window))
-                (js/console.debug "Triggered action" action))
+              (when #?(:cljs (and js/goog.DEBUG
+                                  (exists? js/window))
+                       :clj true)
+                #?(:cljs (js/console.debug "Triggered action" action)
+                   :clj (println "Triggered action" action)))
               (cond-> acc
                 new-state (assoc :new-state new-state)
                 effects (update :effects into effects))))
           {:new-state state
            :effects []}
           actions))
-
-(defn perform-effect! [{:keys [^js replicant/js-event]} effect]
-  (match effect
-    [:console/fx.debug & args]
-    (apply (comp js/console.debug prn) args)
-
-    [:dom/fx.focus-element element]
-    (.focus element)
-
-    [:dom/fx.prevent-default]
-    (.preventDefault js-event)
-
-    [:dom/fx.set-input-text element text]
-    (set! (.-value element) text)))
