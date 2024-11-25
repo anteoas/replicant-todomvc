@@ -8,28 +8,32 @@
 
 #_{:clj-kondo/ignore [:private-call]}
 (deftest maybe-add
-  (testing "it should add a new item when the string is not blank"
+  (testing "Adding non-blank"
     (let [result (sut/maybe-add [] "New item")]
-      (is (= 1 (count result)))
-      (is (= "New item" (:item/title (first result))))
-      (is (false? (:item/completed? (first result))))
-      (is (uuid? (:item/id (first result))))))
-
-  (testing "it should not add a new item when the string is empty"
-    (is (= 0 (count (sut/maybe-add [] "")))))
-
-  (testing "it should not add a new item when the string is blank"
-    (is (= 0 (count (sut/maybe-add [] "   ")))))
-
-  (testing "it should trim the string before adding a new item"
-    (is (= "New item" (-> (sut/maybe-add [] "  New item  ")
-                          first
-                          :item/title))))
-
-  (testing "items are added to the end of the list"
+      (is (= 1
+             (count result))
+          "it adds an item")
+      (is (= "New item"
+             (:item/title (first result)))
+          "it populates the title")
+      (is (false? (:item/completed? (first result)))
+          "it adds the item as uncompleted")
+      (is (uuid? (:item/id (first result)))
+          "it gives the item an id"))
     (is (= "Second item" (-> (sut/maybe-add [{:item/title "First item"}] "Second item")
                              second
-                             :item/title)))))
+                             :item/title))
+        "it adds the item to the end of the list")
+    (is (= "New item" (-> (sut/maybe-add [] "  New item  ")
+                          first
+                          :item/title))
+        "it trims the string before adding using it as the title for the item"))
+
+  (testing "Blank or empty"
+    (is (= 0 (count (sut/maybe-add [] "")))
+        "it does not add a new item when the string is empty")
+    (is (= 0 (count (sut/maybe-add [] "   ")))
+        "it does not add a new item when the string is blank")))
 
 (defn- select-attribute
   [selector path data]
