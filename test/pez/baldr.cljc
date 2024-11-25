@@ -46,11 +46,15 @@
     (doseq [printout printouts]
       (println printout))))
 
-(defmethod t/report [::t/default :begin-test-var] [_m]
+(defn- dispatch-value [type]
+  #?(:clj type
+     :cljs [::t/default type]))
+
+(defmethod t/report (dispatch-value :begin-test-var) [_m]
   (swap! !state merge (select-keys initial-state [:contexts])))
 
-(def ^:private original-summary (get-method t/report [::t/default :summary]))
-(defmethod t/report [::t/default :summary] [m]
+(def ^:private original-summary (get-method t/report (dispatch-value :summary)))
+(defmethod t/report (dispatch-value :summary) [m]
   (when (seq (:failure-prints @!state))
     (println))
   (doseq [[i failure-print] (map-indexed vector (:failure-prints @!state))]
@@ -58,28 +62,28 @@
   (reset! !state initial-state)
   (original-summary m))
 
-(def ^:private original-pass (get-method t/report [::t/default :pass]))
-(defmethod t/report [::t/default :pass] [m]
+(def ^:private original-pass (get-method t/report (dispatch-value :pass)))
+(defmethod t/report (dispatch-value :pass) [m]
   (report! m {:color gray
               :bullet "✓"
               :bullet-color green})
   (original-pass m))
 
-(def ^:private original-fail (get-method t/report [::t/default :fail]))
-(defmethod t/report [::t/default :fail] [m]
+(def ^:private original-fail (get-method t/report (dispatch-value :fail)))
+(defmethod t/report (dispatch-value :fail) [m]
   (let [failure-printout (with-out-str (original-fail m))]
     (swap! !state update :failure-prints conj failure-printout))
   (report! m {:color red
               :bullet (str (count (:failure-prints @!state)) ")")
               :bullet-color red}))
 
-(def ^:private original-error (get-method t/report [::t/default :error]))
-(defmethod t/report [::t/default :error] [m]
+(def ^:private original-error (get-method t/report (dispatch-value :error)))
+(defmethod t/report (dispatch-value :error) [m]
   (let [error-printout (with-out-str (original-error m))]
     (swap! !state update :failure-prints conj error-printout))
   (report! m {:color red
               :bullet (str (count (:failure-prints @!state)) ")")
               :bullet-color red}))
 
-(defmethod t/report [::t/default :begin-test-var] [m]
+(defmethod t/report (dispatch-value :begin-test-var) [m]
   (println (str (indent 1) (default (:var m)))))
