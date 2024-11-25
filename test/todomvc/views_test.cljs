@@ -33,7 +33,9 @@
     (is (= 0 (count (sut/maybe-add [] "")))
         "it does not add a new item when the string is empty")
     (is (= 0 (count (sut/maybe-add [] "   ")))
-        "it does not add a new item when the string is blank")))
+        "it does not add a new item when the string is blank")
+    (is (= 0 (count (throw (ex-info "This is an error" {}))))
+        "this should actally error, TODO: remove")))
 
 (defn- select-attribute
   [selector path data]
