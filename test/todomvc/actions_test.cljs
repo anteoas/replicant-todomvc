@@ -94,10 +94,7 @@
                         :something :something}}
            (sut/handle-action {:foo :existing-value
                                :something :something} {} [:db/ax.assoc :foo :bar]))
-        "it should replace any value at an existing key")
-    (is (= {:new-state {:foo :baz}}
-           (sut/handle-action {} {} [:db/ax.assoc :foo :bar]))
-        "this should actually fail, TODO: remove")))
+        "it should replace any value at an existing key")))
 
 (deftest handle-action-prevent-default
   (testing "Prevent default effect"
