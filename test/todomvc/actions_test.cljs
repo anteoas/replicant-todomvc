@@ -157,35 +157,37 @@
            (sut/handle-action {:app/todo-items [{:item/title "old title"}]} {} [:edit/ax.end-editing "  new title  " 0]))
         "should trim the title")
 
-    (is (= {:new-state {:app/todo-items []}}
-           (-> (sut/handle-action {:app/todo-items [{:item/title "delete me"}]} {} [:edit/ax.end-editing "" 0])
-               (update :new-state select-keys [:app/todo-items])))
-        "should remove the item if the draft is empty")
+    (testing "Removal"
+      (is (= {:new-state {:app/todo-items []}}
+             (-> (sut/handle-action {:app/todo-items [{:item/title "delete me"}]} {} [:edit/ax.end-editing "" 0])
+                 (update :new-state select-keys [:app/todo-items])))
+          "should remove the item if the draft is empty")
 
-    (is (= {:new-state {:app/todo-items []}}
-           (-> (sut/handle-action {:app/todo-items [{:item/title "delete me"}]} {} [:edit/ax.end-editing " " 0])
-               (update :new-state select-keys [:app/todo-items])))
-        "should remove the item if the trimmed draft is empty")
+      (is (= {:new-state {:app/todo-items []}}
+             (-> (sut/handle-action {:app/todo-items [{:item/title "delete me"}]} {} [:edit/ax.end-editing " " 0])
+                 (update :new-state select-keys [:app/todo-items])))
+          "should remove the item if the trimmed draft is empty"))
 
-    (is (= {:new-state {:app/todo-items []
-                        :app/mark-all-checkbox-checked? false}}
-           (sut/handle-action {:app/todo-items [{:item/title "delete me"
-                                                 :item/completed? true}]
-                               :app/mark-all-checkbox-checked? true} {} [:edit/ax.end-editing "" 0]))
-        "should update mark-all state if the item is removed")
+    (testing "Mark-all checkbox state"
+      (is (= {:new-state {:app/todo-items []
+                          :app/mark-all-checkbox-checked? false}}
+             (sut/handle-action {:app/todo-items [{:item/title "delete me"
+                                                   :item/completed? true}]
+                                 :app/mark-all-checkbox-checked? true} {} [:edit/ax.end-editing "" 0]))
+          "it is unchecked if the item is removed, leaving an empty items list")
 
-    (is (= {:new-state {:app/todo-items [{:item/completed? false}]
-                        :app/mark-all-checkbox-checked? false}}
-           (sut/handle-action {:app/todo-items [{:item/title "delete me"
-                                                 :item/completed? true}
-                                                {:item/completed? false}]
-                               :app/mark-all-checkbox-checked? true} {} [:edit/ax.end-editing "" 0]))
-        "should update mark-all state if the item is removed")
+      (is (= {:new-state {:app/todo-items [{:item/completed? false}]
+                          :app/mark-all-checkbox-checked? false}}
+             (sut/handle-action {:app/todo-items [{:item/title "delete me"
+                                                   :item/completed? true}
+                                                  {:item/completed? false}]
+                                 :app/mark-all-checkbox-checked? true} {} [:edit/ax.end-editing "" 0]))
+          "it is unchecked if the item is removed, leaving a non-empty items list with some items not completed")
 
-    (is (= {:new-state {:app/todo-items [{:item/completed? true}]
-                        :app/mark-all-checkbox-checked? true}}
-           (sut/handle-action {:app/todo-items [{:item/title "delete me"
-                                                 :item/completed? true}
-                                                {:item/completed? true}]
-                               :app/mark-all-checkbox-checked? false} {} [:edit/ax.end-editing "" 0]))
-        "should update mark-all state if the item is removed")))
+      (is (= {:new-state {:app/todo-items [{:item/completed? true}]
+                          :app/mark-all-checkbox-checked? true}}
+             (sut/handle-action {:app/todo-items [{:item/title "delete me"
+                                                   :item/completed? true}
+                                                  {:item/completed? true}]
+                                 :app/mark-all-checkbox-checked? false} {} [:edit/ax.end-editing "" 0]))
+          "it is checked if the item is removed, leaving a non-empty items list with all items completed"))))
