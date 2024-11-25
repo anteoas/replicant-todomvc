@@ -23,9 +23,8 @@
 (defn- indent [level]
   (apply str (repeat (* 2 level) " ")))
 
-(defn- get-report [m env state {:keys [color bullet bullet-color]}]
+(defn- get-report [m contexts state {:keys [color bullet bullet-color]}]
   (let [seen-contexts (:contexts state)
-        contexts (:testing-contexts env)
         common-contexts (take-while true? (map = (reverse seen-contexts) (reverse contexts)))
         common-prefix-length (count common-contexts)
         new-contexts (reverse (take (- (count contexts) common-prefix-length) contexts))
@@ -40,7 +39,9 @@
                                      (str (bullet-color bullet) " " (color message)))))}))
 
 (defn report! [m config]
-  (let [{:keys [new-state printouts]} (get-report m (t/get-current-env) @!state config)]
+  (let [contexts #?(:cljs (:testing-contexts (t/get-current-env))
+                    :clj t/*testing-contexts*)
+        {:keys [new-state printouts]} (get-report m contexts @!state config)]
     (reset! !state new-state)
     (doseq [printout printouts]
       (println printout))))
