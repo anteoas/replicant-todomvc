@@ -2,9 +2,6 @@
   (:require [cljs.test]
             [clojure.string :as string]))
 
-(defn- bold [text]
-  (str "\033[1m" text "\033[22m"))
-
 (defn- default [text]
   (str "\033[39m" text "\033[22m"))
 
@@ -36,7 +33,7 @@
      :printouts (cond-> []
                   (seq new-contexts) (into (map-indexed (fn [idx ctx]
                                                           (str (indent (+ common-prefix-length idx 2))
-                                                               (bold ctx)))
+                                                               (default ctx)))
                                                         new-contexts))
                   :always (conj (str (indent (+ 2 (count contexts)))
                                      (str (bullet-color bullet) " " (color message)))))}))
