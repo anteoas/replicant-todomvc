@@ -4,7 +4,8 @@
    [lookup.core :as l]
    [todomvc.actions :as a]
    [todomvc.views :as sut]
-   [clojure.string :as string]))
+   [clojure.string :as string]
+   [todomvc.util :as util]))
 
 #_{:clj-kondo/ignore [:private-call]}
 (deftest maybe-add
@@ -75,7 +76,7 @@
   (let [on-input-actions (->> (sut/add-view state)
                               (select-actions :input.new-todo [:on :input]))
         {:keys [new-state effects] :as result} (a/handle-actions state
-                                                                 {:replicant/js-event (clj->js {:target {:value add-text}})}
+                                                                 {:replicant/js-event (util/->js {:target {:value add-text}})}
                                                                  on-input-actions)]
     (is (= add-text
            (:add/draft new-state)))
@@ -202,7 +203,7 @@
           on-input-actions (->> (sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:on :input]))
           {:keys [new-state effects]} (a/handle-actions initial-state
-                                                        {:replicant/js-event (clj->js {:target {:value "Input"}})}
+                                                        {:replicant/js-event (util/->js {:target {:value "Input"}})}
                                                         on-input-actions)]
       (is (= "Input"
              (:edit/draft new-state))
@@ -215,7 +216,7 @@
           on-keyup-actions (->> (sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:on :keyup]))
           {:keys [new-state effects]} (a/handle-actions initial-state
-                                                        {:replicant/js-event (clj->js {:code "Escape"})}
+                                                        {:replicant/js-event (util/->js {:code "Escape"})}
                                                         on-keyup-actions)]
       (is (= "Escape"
              (:edit/keyup-code new-state))
@@ -328,8 +329,8 @@
               on-unmount-actions (->> (sut/edit-view initial-state 1 (second items))
                                       (select-actions :form [:replicant/on-unmount]))
               {:keys [new-state]} (a/handle-actions initial-state
-                                                            {}
-                                                            on-unmount-actions)]
+                                                    {}
+                                                    on-unmount-actions)]
           (testing mark-all-case
             (is (= mark-all-state
                    (:app/mark-all-checkbox-checked? new-state))

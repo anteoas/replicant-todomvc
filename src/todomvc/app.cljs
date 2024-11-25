@@ -2,6 +2,7 @@
   (:require [gadget.inspector :as inspector]
             [replicant.dom :as r-dom]
             [todomvc.actions :as actions]
+            [todomvc.effects :as effects]
             [todomvc.db :as db]
             [todomvc.router :as router]
             [todomvc.views :as views]))
@@ -18,7 +19,7 @@
     (when effects
       (doseq [effect effects]
         (when js/goog.DEBUG (js/console.debug "Triggered effect" effect))
-        (actions/perform-effect! replicant-data effect)))))
+        (effects/perform-effect! replicant-data effect)))))
 
 (defn ^{:dev/after-load true :export true} start! []
   (render! @db/!state))
