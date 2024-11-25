@@ -68,7 +68,7 @@
                                      ["stateless-data-driven-uis.png"]
                                      ["LICENSE.md"]])
     (p/shell "tree" app-dir)))
-;(require 'todomvc.views-test)
+
 (defn ^:export run-tests-jvm! []
   (println "Running view tests with JVM Clojure...")
   (let [command ["clojure" "-M:test" "-e"
