@@ -67,10 +67,10 @@ jobs:
           set -x
           npm run test
 
-      - name: Run view tests with JVM Clojure
+      - name: Run tests with JVM Clojure
         run: |
           set -x
-          bb run-view-tests-jvm
+          bb run-tests-jvm
 
       - name: Copy to app folder
         run: |
