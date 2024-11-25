@@ -49,7 +49,8 @@
 
 (def ^:private original-summary (get-method cljs.test/report [:cljs.test/default :summary]))
 (defmethod cljs.test/report [:cljs.test/default :summary] [m]
-  (println)
+  (when (seq (:failure-prints @!state))
+    (println))
   (doseq [[i failure-print] (map-indexed vector (:failure-prints @!state))]
     (println (red (str (inc i) ") " (string/trim failure-print)))))
   (reset! !state initial-state)
