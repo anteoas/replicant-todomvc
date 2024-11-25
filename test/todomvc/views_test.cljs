@@ -264,17 +264,15 @@
                                                           {}
                                                           on-unmount-actions)]
         (testing trim-case
-         (is (= (string/trim input)
-                (-> new-state :app/todo-items first :item/title))
-             "it updates the item title correctly")
+          (is (= (string/trim input)
+                 (-> new-state :app/todo-items first :item/title))
+              "it updates the item title correctly")
           (is (nil? (:edit/editing-item-index new-state))
               "it removes the editing index")
           (is (nil? (:edit/keyup-code new-state))
               "it removes the keycode")
-          (is (seq effects)
-              "it does not have other side-effects")
-          (is (= 0 (throw (ex-info "This is an expected exception" {})))
-              "it throws an exception"))))
+          (is (empty? effects)
+              "it does not have other side-effects"))))
 
     (doseq [[input input-case] [["" "Remove empty"]
                                 ["  " "Remove blank"]]]
@@ -567,42 +565,47 @@
           "it updates the mark-all state false when some remaining items are completed and some are uncompleted"))))
 
 (deftest app-view
-  (testing "it shows a `.todoapp` element"
-    (is (seq (l/select '.todoapp (sut/app-view {})))))
+  (is (every? (partial some #{[:dom/ax.prevent-default]})
+              (->> (sut/app-view {:app/todo-items [{:item/title "First item"}]
+                                  :edit/editing-item-index 0
+                                  :app/item-filter :filter/all})
+                   (select-attribute 'form [:on :submit])
+                   (map set)))
+      "all form-submits have a prevent-default action")
 
-  (testing "the `.todoapp` element contains a `.header` element with a h1 element with the text `todos`"
+  (testing ".todoapp element"
+    (is (seq (l/select '.todoapp (sut/app-view {})))
+        "it shows a `.todoapp` element")
     (is (= '([:h1 "todos"])
-           (l/select '[.todoapp .header h1] (sut/app-view {})))))
+           (l/select '[.todoapp .header h1] (sut/app-view {})))
+        "it contains a `.header` element with a h1 element with the text `todos`")
+    (testing "the .-new-todo input"
+      (is (= '(true)
+             (select-attribute '[.todoapp .header input.new-todo]
+                               [:autofocus]
+                               (sut/app-view {})))
+          "it is an `input` contained in the `.header` element inside `.todoapp`")
+      (is (= '(true)
+             (select-attribute '[.todoapp .header input.new-todo]
+                               [:autofocus]
+                               (sut/app-view {})))
+          "it is present with an empty app state")
+      (is (= '(true)
+             (select-attribute '[.todoapp .header input.new-todo]
+                               [:autofocus]
+                               (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
+          "it is present with items in the app state")))
 
-  (testing "the `.todoapp` element contains an autofocused `.new-todo` input in the `.header` element"
-    (is (= '(true)
-           (select-attribute '[.todoapp .header input.new-todo]
-                             [:autofocus]
-                             (sut/app-view {})))
-        "with an empty app state")
 
-    (is (= '(true)
-           (select-attribute '[.todoapp .header input.new-todo]
-                             [:autofocus]
-                             (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
-        "with items in the app state"))
 
-  (testing "the `.todoapp` element `.main` element"
+  (testing "the `.todoapp` `.main` element"
     (is (empty? (l/select '[.todoapp .main] (sut/app-view {})))
         "it has no `.main` view when there are no items")
     (is (seq (l/select '[.todoapp .main] (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
         "it has a `.main` view when there are items"))
 
-  (testing "the `.todoapp` element `.footer` element"
+  (testing "the `.todoapp` `.footer` element"
     (is (empty? (l/select '[.todoapp .footer] (sut/app-view {})))
         "it has no `.footer` when there are no items")
     (is (seq (l/select '[.todoapp .footer] (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
-        "it has a `.footer` when there are items"))
-
-  (testing "all form-submits have a prevent-default action"
-    (is (every? (partial some #{[:dom/ax.prevent-default]})
-                (->> (sut/app-view {:app/todo-items [{:item/title "First item"}]
-                                    :edit/editing-item-index 0
-                                    :app/item-filter :filter/all})
-                     (select-attribute 'form [:on :submit])
-                     (map set))))))
+        "it has a `.footer` when there are items")))
