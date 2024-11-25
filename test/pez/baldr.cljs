@@ -35,7 +35,7 @@
     (set-state-from-env!)
     (let [context (:seen-context @!state)]
       (when (and context (not= seen-context context))
-        (print (str (indent (:level @!state))
+        (println (str (indent (:level @!state))
                     (bold (first context))))))
     (println (str (indent (inc (:level @!state)))
                   (str (bullet-color bullet) " " (color message))))))
