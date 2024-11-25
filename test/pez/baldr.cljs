@@ -17,8 +17,7 @@
 (defn- red [text]
   (str "\033[31m" text "\033[39m"))
 
-(def ^:private initial-state {:level 0
-                              :contexts nil
+(def ^:private initial-state {:contexts nil
                               :failure-prints []})
 
 (defonce ^:private !state (atom initial-state))
@@ -29,23 +28,26 @@
 (defn- set-state-from-env! []
   (let [contexts (:testing-contexts (cljs.test/get-current-env))]
     (swap! !state assoc
-           :level (+ 1 (count contexts))
            :contexts contexts)))
 
-(defn- report-test [m {:keys[color bullet bullet-color]}]
+(defn- report-test [m {:keys [color bullet bullet-color]}]
   (let [seen-contexts (:contexts @!state)
         message (or (:message m) (pr-str (:expected m)))]
     (set-state-from-env!)
-    (let [contexts (:contexts @!state)]
-      (when (and (not= seen-contexts contexts)
-                 (seq contexts))
-        (println (str (indent (:level @!state))
-                    (bold (first contexts))))))
-    (println (str (indent (inc (:level @!state)))
-                  (str (bullet-color bullet) " " (color message))))))
+    (let [contexts (:contexts @!state)
+          common-prefix-length (count (take-while true? (map = (reverse seen-contexts)
+                                                             (reverse contexts))))
+          new-contexts (reverse (take (- (count contexts) common-prefix-length) contexts))]
+      (when (seq new-contexts)
+        (doseq [[idx ctx] (map-indexed vector new-contexts)]
+          (println (str (indent (+ common-prefix-length idx 2))
+                        (bold ctx)))))
+      (println (str (indent (+ 2 (count contexts)))
+                    (str (bullet-color bullet) " " (color message)))))))
+
 
 (defmethod cljs.test/report [:cljs.test/default :begin-test-var] [_m]
-  (swap! !state merge (select-keys initial-state [:level :contexts])))
+  (swap! !state merge (select-keys initial-state [:contexts])))
 
 (def ^:private original-summary (get-method cljs.test/report [:cljs.test/default :summary]))
 (defmethod cljs.test/report [:cljs.test/default :summary] [m]

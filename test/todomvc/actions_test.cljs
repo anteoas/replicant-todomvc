@@ -5,10 +5,11 @@
 #_{:clj-kondo/ignore [:private-call]}
 (deftest get-mark-all-as-state
   (testing "Mark-all state"
-    (is (false? (sut/get-mark-all-as-state [{:item/completed? true}
-                                            {:item/completed? true}
-                                            {:item/completed? true}]))
-        "it is false when all items are completed")
+    (testing "testing header directly inside a testing header"
+      (is (false? (sut/get-mark-all-as-state [{:item/completed? true}
+                                              {:item/completed? true}
+                                              {:item/completed? true}]))
+          "it is false when all items are completed"))
 
     (is (true? (sut/get-mark-all-as-state [{:item/completed? false}
                                            {:item/completed? false}
