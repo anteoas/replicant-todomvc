@@ -1,5 +1,6 @@
 (ns pez.baldr
-  (:require [cljs.test]
+  (:require #?(:cljs [cljs.test :as t]
+               :clj [clojure.test :as t])
             [clojure.string :as string]))
 
 (defn- default [text]
@@ -39,16 +40,16 @@
                                      (str (bullet-color bullet) " " (color message)))))}))
 
 (defn report! [m config]
-  (let [{:keys [new-state printouts]} (get-report m (cljs.test/get-current-env) @!state config)]
+  (let [{:keys [new-state printouts]} (get-report m (t/get-current-env) @!state config)]
     (reset! !state new-state)
     (doseq [printout printouts]
       (println printout))))
 
-(defmethod cljs.test/report [:cljs.test/default :begin-test-var] [_m]
+(defmethod t/report [::t/default :begin-test-var] [_m]
   (swap! !state merge (select-keys initial-state [:contexts])))
 
-(def ^:private original-summary (get-method cljs.test/report [:cljs.test/default :summary]))
-(defmethod cljs.test/report [:cljs.test/default :summary] [m]
+(def ^:private original-summary (get-method t/report [::t/default :summary]))
+(defmethod t/report [::t/default :summary] [m]
   (when (seq (:failure-prints @!state))
     (println))
   (doseq [[i failure-print] (map-indexed vector (:failure-prints @!state))]
@@ -56,28 +57,28 @@
   (reset! !state initial-state)
   (original-summary m))
 
-(def ^:private original-pass (get-method cljs.test/report [:cljs.test/default :pass]))
-(defmethod cljs.test/report [:cljs.test/default :pass] [m]
+(def ^:private original-pass (get-method t/report [::t/default :pass]))
+(defmethod t/report [::t/default :pass] [m]
   (report! m {:color gray
               :bullet "✓"
               :bullet-color green})
   (original-pass m))
 
-(def ^:private original-fail (get-method cljs.test/report [:cljs.test/default :fail]))
-(defmethod cljs.test/report [:cljs.test/default :fail] [m]
+(def ^:private original-fail (get-method t/report [::t/default :fail]))
+(defmethod t/report [::t/default :fail] [m]
   (let [failure-printout (with-out-str (original-fail m))]
     (swap! !state update :failure-prints conj failure-printout))
   (report! m {:color red
               :bullet (str (count (:failure-prints @!state)) ")")
               :bullet-color red}))
 
-(def ^:private original-error (get-method cljs.test/report [:cljs.test/default :error]))
-(defmethod cljs.test/report [:cljs.test/default :error] [m]
+(def ^:private original-error (get-method t/report [::t/default :error]))
+(defmethod t/report [::t/default :error] [m]
   (let [error-printout (with-out-str (original-error m))]
     (swap! !state update :failure-prints conj error-printout))
   (report! m {:color red
               :bullet (str (count (:failure-prints @!state)) ")")
               :bullet-color red}))
 
-(defmethod cljs.test/report [:cljs.test/default :begin-test-var] [m]
+(defmethod t/report [::t/default :begin-test-var] [m]
   (println (str (indent 1) (default (:var m)))))
