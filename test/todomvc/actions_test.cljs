@@ -4,23 +4,24 @@
 
 #_{:clj-kondo/ignore [:private-call]}
 (deftest get-mark-all-as-state
-  (testing "false when all items are completed"
+  (testing "Mark-all state"
     (is (false? (sut/get-mark-all-as-state [{:item/completed? true}
                                             {:item/completed? true}
-                                            {:item/completed? true}]))))
+                                            {:item/completed? true}]))
+        "it is false when all items are completed")
 
-  (testing "true when no items are completed"
     (is (true? (sut/get-mark-all-as-state [{:item/completed? false}
                                            {:item/completed? false}
-                                           {:item/completed? false}]))))
+                                           {:item/completed? false}]))
+        "it is true when no items are completed")
 
-  (testing "true when some items are completed"
     (is (true? (sut/get-mark-all-as-state [{:item/completed? true}
                                            {:item/completed? false}
-                                           {:item/completed? true}]))))
+                                           {:item/completed? true}]))
+        "it is true when some items are completed")
 
-  (testing "true when items list is empty"
-    (is (true? (sut/get-mark-all-as-state [])))))
+    (is (true? (sut/get-mark-all-as-state []))
+        "it is true when items list is empty")))
 
 (deftest handle-action-set-mark-all-state
   (testing "it should set mark-all-state to true when all items are completed"
