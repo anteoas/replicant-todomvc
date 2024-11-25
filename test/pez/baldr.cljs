@@ -5,11 +5,14 @@
 (defn- bold [text]
   (str "\033[1m" text "\033[22m"))
 
+(defn- default [text]
+  (str "\033[39m" text "\033[22m"))
+
 (defn- gray [text]
   (str "\033[90m" text "\033[39m"))
 
 (defn- green [text]
-  (str "\033[32m" text "\033[22m"))
+  (str "\033[1;32m" text "\033[22m"))
 
 (defn- red [text]
   (str "\033[31m" text "\033[39m"))
@@ -69,5 +72,5 @@
   (report-test m {:color red :bullet (str (count (:failure-prints @!state)) ")") :bullet-color red}))
 
 (defmethod cljs.test/report [:cljs.test/default :begin-test-var] [m]
-  (println (str (indent 1) (:var m))))
+  (println (str (indent 1) (default (:var m)))))
 
