@@ -24,7 +24,7 @@
        :else x))
    action))
 
-(defn- get-mark-all-as-state [items]
+(defn get-mark-all-as-state [items]
   (let [as-state (if (and (seq items)
                           (every? :item/completed? items))
                    false
