@@ -21,11 +21,11 @@
    (js-get-in o [\"TARGET\" \"value\"]) ; => nil
    ```"
   [object path]
-  (reduce (fn [acc k]
-            (some-> acc #?(:cljs (unchecked-get k)
-                           :clj (get k))))
-          object
-          path))
+  #?(:cljs (reduce (fn [acc k]
+                     (some-> acc (unchecked-get k)))
+                   object
+                   path)
+           :clj (get-in object (map keyword path))))
 
 (defn ->js
   "Converts a Clojure map to a JavaScript object.

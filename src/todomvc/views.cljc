@@ -2,7 +2,7 @@
   (:require [clojure.string :as string]
             [todomvc.util :as util]))
 
-(defn- maybe-add [coll s]
+(defn maybe-add [coll s]
   (let [trimmed (string/trim s)]
     (if (string/blank? trimmed)
       coll
@@ -10,7 +10,7 @@
                   :item/completed? false
                   :item/id (random-uuid)}))))
 
-(defn- add-view [{:keys [add/draft]}]
+(defn add-view [{:keys [add/draft]}]
   [:form {:on {:submit [[:dom/ax.prevent-default]
                         [:db/ax.update :app/todo-items maybe-add draft]
                         [:db/ax.assoc :add/draft ""]
@@ -22,7 +22,7 @@
                      :placeholder "What needs to be done?"
                      :on {:input [[:db/ax.assoc :add/draft :event/target.value]]}}]])
 
-(defn- edit-view [{:keys [edit/editing-item-index edit/draft edit/keyup-code]} index item]
+(defn edit-view [{:keys [edit/editing-item-index edit/draft edit/keyup-code]} index item]
   (when (and (= index editing-item-index)
              (not= "Escape" keyup-code))
     [:form {:replicant/key (:item/id item)

@@ -96,7 +96,7 @@
             (let [{:keys [new-state effects]} (handle-action state replicant-data action)]
               (when #?(:cljs (and js/goog.DEBUG
                                   (exists? js/window))
-                       :clj true)
+                       :clj false)
                 #?(:cljs (js/console.debug "Triggered action" action)
                    :clj (println "Triggered action" action)))
               (cond-> acc
