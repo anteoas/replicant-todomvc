@@ -69,5 +69,5 @@
   (report-test m {:color red :bullet (str (count (:failure-prints @!state)) ")") :bullet-color red}))
 
 (defmethod cljs.test/report [:cljs.test/default :begin-test-var] [m]
-  (println (str (indent 1) (map #(:name (meta %)) (:testing-vars (cljs.test/get-current-env))))))
+  (println (str (indent 1) (:var m))))
 
