@@ -76,7 +76,7 @@
                   (require 'pez.baldr)
                   (require 'todomvc.views-test)
                   (require 'todomvc.actions-test)
-                  (clojure.test/run-tests 'todomvc.views-test 'todomvc.actions-test)"]
+                  (clojure.test/run-tests 'todomvc.actions-test 'todomvc.views-test)"]
         {:keys [err exit]} (apply p/shell command)]
     (when-not (zero? exit)
       (println err))))
