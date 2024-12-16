@@ -42,7 +42,7 @@
       (and (= :filter/completed item-filter)
            (:item/completed? item))))
 
-(defn item-view [{:keys [edit/editing-item-index app/item-filter] :as state} index item]
+(defn- item-view [{:keys [edit/editing-item-index app/item-filter] :as state} index item]
   (when (item-visible? item item-filter)
     [:li {:replicant/key (:item/id item)
           :style {:max-height "calc(24px * 1.2 + 40px)"
@@ -57,10 +57,11 @@
                            :edit/editing-item-index index
                            :edit/draft (:item/title item)]]}}
      [:div.view
-      [:input.toggle {:type :checkbox
-                      :checked (:item/completed? item)
-                      :on {:change [[:db/ax.update-in [:app/todo-items index :item/completed?] not]
-                                    [:app/ax.set-mark-all-state]]}}]
+      [:input.toggle
+       {:type :checkbox
+        :checked (:item/completed? item)
+        :on {:change [[:db/ax.update-in [:app/todo-items index :item/completed?] not]
+                      [:app/ax.set-mark-all-state]]}}]
       [:label (:item/title item)]
       [:button.destroy {:on {:click [[:db/ax.update :app/todo-items (partial util/remove-nth index)]
                                      [:app/ax.set-mark-all-state]]}}]]
@@ -73,10 +74,11 @@
 
 (defn- main-view [state]
   [:div.main
-   [:input#toggle-all.toggle-all {:type :checkbox
-                                  :checked (:app/mark-all-checkbox-checked? state)
-                                  :on {:change [[:db/ax.assoc :app/mark-all-checkbox-checked? :event/target.checked]
-                                                [:app/ax.mark-all-items-as :event/target.checked]]}}]
+   [:input#toggle-all.toggle-all
+    {:type :checkbox
+     :checked (:app/mark-all-checkbox-checked? state)
+     :on {:change [[:db/ax.assoc :app/mark-all-checkbox-checked? :event/target.checked]
+                   [:app/ax.mark-all-items-as :event/target.checked]]}}]
    [:label {:for "toggle-all"}
     "Mark all as complete"]
    (todo-list-view state)])
@@ -86,8 +88,7 @@
     [:footer.footer
      [:span.todo-count
       [:strong active-count]
-      (str " "
-           (condp = active-count 1 "item" "items")
+      (str (condp = active-count 1 "item" "items")
            " left")]
      [:ul.filters
       [:li [:a {:class (when (= :filter/all item-filter) "selected")
