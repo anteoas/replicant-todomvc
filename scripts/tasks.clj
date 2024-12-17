@@ -2,7 +2,8 @@
   (:require
    [babashka.fs :as fs]
    [babashka.http-client :as http]
-   [babashka.process :as p]))
+   [babashka.process :as p]
+   [clojure.string :as string]))
 
 
 (def inspector-zip-url "https://github.com/cjohansen/gadget-inspector/archive/refs/heads/master.zip")
@@ -69,14 +70,33 @@
                                      ["LICENSE.md"]])
     (p/shell "tree" app-dir)))
 
+; Adapted from https://gist.github.com/thiagokokada/fee513a7b8578c87c05469267c48e612
+
+(defn test-file->test-ns
+  [file]
+  (as-> file $
+    (fs/components $)
+    (drop 1 $)
+    (mapv str $)
+    (string/join "." $)
+    (string/replace $ #"_" "-")
+    (string/replace $ #"\.cljc?$" "")
+    (str "'" $)))
+
+(defn quoted-test-namespaces []
+  (->> (fs/glob "test" "**/*_test.clj{,c}")
+       (mapv test-file->test-ns)))
+
+(defn ns->require-str [qns]
+  (str "(require " qns ")"))
+
 (defn ^:export run-tests-jvm! []
   (println "Running view tests with JVM Clojure...")
-  (let [command ["clojure" "-M:test" "-e"
-                 "(require 'clojure.test)
-                  (require 'pez.baldr)
-                  (require 'todomvc.views-test)
-                  (require 'todomvc.actions-test)
-                  (clojure.test/run-tests 'todomvc.actions-test 'todomvc.views-test)"]
+  (let [qnss (quoted-test-namespaces)
+        command ["clojure" "-M:test" "-e"
+                 (str "(require 'clojure.test)"
+                      (string/join "\n" (map ns->require-str qnss))
+                      "(clojure.test/run-tests " (string/join " " qnss) ")")]
         {:keys [err exit]} (apply p/shell command)]
     (when-not (zero? exit)
       (println err))))
