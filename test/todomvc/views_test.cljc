@@ -1,26 +1,12 @@
 (ns todomvc.views-test
   (:require
+   [clojure.string :as string]
    [clojure.test :refer [deftest is testing]]
    [lookup.core :as l]
    [todomvc.actions :as a]
-   [todomvc.views :as sut]
-   [clojure.string :as string]
-   [todomvc.util :as util]))
-
-(defn- select-attribute
-  [selector path data]
-  (let [elements (l/select selector data)]
-    (->> (keep (fn [element]
-                 (when (map? (second element))
-                   (get-in (second element) path)))
-               elements))))
-
-(defn- flatten-actionss [actionss]
-  (reduce into [] actionss))
-
-(defn- select-actions [selector path data]
-  (->> (select-attribute selector path data)
-       flatten-actionss))
+   [todomvc.test-util :as tu]
+   [todomvc.util :as util]
+   [todomvc.views :as sut]))
 
 (deftest app-view
   (testing ".todoapp element"
@@ -32,19 +18,19 @@
 
     (testing "the .-new-todo input"
       (is (= '(true)
-             (select-attribute [:.todoapp :.header :input.new-todo]
-                               [:autofocus]
-                               (sut/app-view {})))
+             (tu/select-attribute [:.todoapp :.header :input.new-todo]
+                                  [:autofocus]
+                                  (sut/app-view {})))
           "it is an `input` contained in the `.header` element inside `.todoapp`")
       (is (= '(true)
-             (select-attribute [:.todoapp :.header :input.new-todo]
-                               [:autofocus]
-                               (sut/app-view {})))
+             (tu/select-attribute [:.todoapp :.header :input.new-todo]
+                                  [:autofocus]
+                                  (sut/app-view {})))
           "it is present with an empty app state")
       (is (= '(true)
-             (select-attribute [:.todoapp :.header :input.new-todo]
-                               [:autofocus]
-                               (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
+             (tu/select-attribute [:.todoapp :.header :input.new-todo]
+                                  [:autofocus]
+                                  (sut/app-view {:app/todo-items [{:item/title "First item"}]})))
           "it is present with items in the app state")))
 
   (testing "the `.todoapp` `.main` element"
@@ -64,7 +50,7 @@
                 (->> (sut/app-view {:app/todo-items [{:item/title "First item"}]
                                     :edit/editing-item-index 0
                                     :app/item-filter :filter/all})
-                     (select-attribute 'form [:on :submit])
+                     (tu/select-attribute 'form [:on :submit])
                      (map set)))
         "all form-submits have a prevent-default action")))
 
@@ -125,7 +111,7 @@
           view (#'sut/items-footer-view (assoc state :app/item-filter :filter/all))]
       (is (some #{"selected"}
                 (->> (l/select :a view)
-                     (select-attribute [] [:class])
+                     (tu/select-attribute [] [:class])
                      first))
           "it marks the 'All' filter as selected when the filter is 'all'"))))
 
@@ -134,7 +120,7 @@
     (let [state {:app/todo-items [{:item/title "Completed Todo" :item/completed? true}
                                   {:item/title "Active Todo" :item/completed? false}]}
           view (#'sut/items-footer-view state)
-          on-click-actions (select-actions :button.clear-completed [:on :click] view)
+          on-click-actions (tu/select-actions :button.clear-completed [:on :click] view)
           {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
       (is (= 1 (count (:app/todo-items new-state)))
           "it clears the completed todo items")
@@ -185,7 +171,7 @@
                                        :app/item-filter :filter/all}
                                       0
                                       {})
-                     (select-attribute :li [:class])
+                     (tu/select-attribute :li [:class])
                      first))
           "The item should have the 'editing' class when it is being edited")
       (is (not-any? #{"editing"}
@@ -193,14 +179,14 @@
                                            :app/item-filter :filter/all}
                                           1
                                           {})
-                         (select-attribute :li [:class])
+                         (tu/select-attribute :li [:class])
                          first))
           "The item should not have the 'editing' class when another item is being edited")
       (is (not-any? #{"editing"}
                     (->> (#'sut/item-view {:app/item-filter :filter/all}
                                           1
                                           {})
-                         (select-attribute :li [:class])
+                         (tu/select-attribute :li [:class])
                          first))
           "The item should not have the 'editing' class when no item is being edited"))
 
@@ -209,14 +195,14 @@
                 (->> (#'sut/item-view {:app/item-filter :filter/all}
                                       0 {:item/title "Test Item"
                                          :item/completed? true})
-                     (select-attribute :li [:class])
+                     (tu/select-attribute :li [:class])
                      first))
           "The item should have the 'completed' class when it is completed")
       (is (not-any? #{"completed"}
                     (->> (#'sut/item-view {:app/item-filter :filter/all}
                                           0 {:item/title "Test Item"
                                              :item/completed? false})
-                         (select-attribute :li [:class])
+                         (tu/select-attribute :li [:class])
                          first))
           "The item should not have the 'completed' class when it is uncompleted")))
 
@@ -226,7 +212,7 @@
           item {:item/title "Test Item"
                 :item/completed? false}
           view (#'sut/item-view state index item)
-          on-dblclick-actions (select-actions :li [:on :dblclick] view)
+          on-dblclick-actions (tu/select-actions :li [:on :dblclick] view)
           {:keys [new-state]} (a/handle-actions state {} on-dblclick-actions)]
       (is (= index
              (:edit/editing-item-index new-state))
@@ -243,9 +229,9 @@
                    :app/mark-all-checkbox-checked? false}
             item (first (:app/todo-items state))
             view (#'sut/item-view state 0 item)]
-        (is (false? (-> (select-attribute :input.toggle [:checked] view) first))
+        (is (false? (-> (tu/select-attribute :input.toggle [:checked] view) first))
             "it is not checked initially")
-        (let [on-change-actions (select-actions :input.toggle [:on :change] view)
+        (let [on-change-actions (tu/select-actions :input.toggle [:on :change] view)
               {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
           (is (true? (-> new-state :app/todo-items first :item/completed?))
               "it marks the item as completed")
@@ -259,9 +245,9 @@
                    :app/mark-all-checkbox-checked? true}
             item (first (:app/todo-items state))
             view (#'sut/item-view state 0 item)]
-        (is (true? (-> (select-attribute :input.toggle [:checked] view) first))
+        (is (true? (-> (tu/select-attribute :input.toggle [:checked] view) first))
             "it is checked initially")
-        (let [on-change-actions (select-actions :input.toggle [:on :change] view)
+        (let [on-change-actions (tu/select-actions :input.toggle [:on :change] view)
               {:keys [new-state]} (a/handle-actions state {} on-change-actions)]
           (is (false? (-> new-state :app/todo-items first :item/completed?))
               "it marks the item as not completed")
@@ -279,7 +265,7 @@
                    :app/mark-all-checkbox-checked? true}
             item (first (:app/todo-items state))
             view (#'sut/item-view state 0 item)
-            on-click-actions (select-actions :button.destroy [:on :click] view)
+            on-click-actions (tu/select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (empty? (:app/todo-items new-state))
             "it removes the item from the todo list")
@@ -296,7 +282,7 @@
                    :app/mark-all-checkbox-checked? false}
             item (second (:app/todo-items state))
             view (#'sut/item-view state 1 item)
-            on-click-actions (select-actions :button.destroy [:on :click] view)
+            on-click-actions (tu/select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (= 2 (count (:app/todo-items new-state)))
             "it removes the item from the todo list")
@@ -313,7 +299,7 @@
                    :app/mark-all-checkbox-checked? false}
             item (second (:app/todo-items state))
             view (#'sut/item-view state 1 item)
-            on-click-actions (select-actions :button.destroy [:on :click] view)
+            on-click-actions (tu/select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (= 2 (count (:app/todo-items new-state)))
             "it removes the item from the todo list")
@@ -330,7 +316,7 @@
                    :app/mark-all-checkbox-checked? false}
             item (second (:app/todo-items state))
             view (#'sut/item-view state 1 item)
-            on-click-actions (select-actions :button.destroy [:on :click] view)
+            on-click-actions (tu/select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (= 2 (count (:app/todo-items new-state)))
             "it removes the item from the todo list")
@@ -372,7 +358,7 @@
   (comment
     (def state {}))
   (let [on-mount-actions (->> (#'sut/add-view state)
-                              (select-actions :input.new-todo [:replicant/on-mount]))
+                              (tu/select-actions :input.new-todo [:replicant/on-mount]))
         {:keys [new-state effects] :as result} (a/handle-actions state
                                                                  {:replicant/node :input-dom-node}
                                                                  on-mount-actions)]
@@ -388,7 +374,7 @@
     (def state {:add/draft-input-element :input-dom-node})
     (def add-text "Input"))
   (let [on-input-actions (->> (#'sut/add-view state)
-                              (select-actions :input.new-todo [:on :input]))
+                              (tu/select-actions :input.new-todo [:on :input]))
         {:keys [new-state effects] :as result} (a/handle-actions state
                                                                  {:replicant/js-event (util/->js {:target {:value add-text}})}
                                                                  on-input-actions)]
@@ -411,7 +397,7 @@
 
           (testing "it handles the form submit event"
             (let [on-submit-actions (->> (#'sut/add-view new-state)
-                                         (select-actions :form [:on :submit]))
+                                         (tu/select-actions :form [:on :submit]))
                   {:keys [new-state effects]} (a/handle-actions new-state
                                                                 {}
                                                                 on-submit-actions)]
@@ -439,7 +425,7 @@
 
           (testing "it handles the form submit event"
             (let [on-submit-actions (->> (#'sut/add-view new-state)
-                                         (select-actions :form [:on :submit]))
+                                         (tu/select-actions :form [:on :submit]))
                   {:keys [new-state]} (a/handle-actions new-state
                                                         {}
                                                         on-submit-actions)]
@@ -453,7 +439,7 @@
 
           (testing "it handles the form submit event"
             (let [on-submit-actions (->> (#'sut/add-view new-state)
-                                         (select-actions :form [:on :submit]))
+                                         (tu/select-actions :form [:on :submit]))
                   {:keys [new-state effects]} (a/handle-actions new-state
                                                                 {}
                                                                 on-submit-actions)]
@@ -491,7 +477,7 @@
   (testing "edit-view on mount"
     (let [initial-state {:edit/editing-item-index 0}
           on-mount-actions (->> (#'sut/edit-view initial-state 0 {})
-                                (select-actions :input.edit [:replicant/on-mount]))
+                                (tu/select-actions :input.edit [:replicant/on-mount]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/node :input-dom-node}
                                                         on-mount-actions)]
@@ -507,13 +493,13 @@
           initial-state {:edit/editing-item-index 0}
           edit-view (#'sut/edit-view initial-state 0 item)]
       (is (= [(:item/title item)]
-             (select-attribute :input.edit [:value] edit-view))
+             (tu/select-attribute :input.edit [:value] edit-view))
           "it populates the input with the item title")))
 
   (testing "it updates the draft from the input event"
     (let [initial-state {:edit/editing-item-index 0}
           on-input-actions (->> (#'sut/edit-view initial-state 0 {})
-                                (select-actions :input.edit [:on :input]))
+                                (tu/select-actions :input.edit [:on :input]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/js-event (util/->js {:target {:value "Input"}})}
                                                         on-input-actions)]
@@ -526,7 +512,7 @@
   (testing "it saves the keycode to the state on keyup"
     (let [initial-state {:edit/editing-item-index 0}
           on-keyup-actions (->> (#'sut/edit-view initial-state 0 {})
-                                (select-actions :input.edit [:on :keyup]))
+                                (tu/select-actions :input.edit [:on :keyup]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/js-event (util/->js {:code "Escape"})}
                                                         on-keyup-actions)]
@@ -539,7 +525,7 @@
   (testing "it removes the editing index on blur"
     (let [initial-state {:edit/editing-item-index 0}
           on-blur-actions (->> (#'sut/edit-view initial-state 0 {})
-                               (select-actions :input.edit [:on :blur]))
+                               (tu/select-actions :input.edit [:on :blur]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {}
                                                         on-blur-actions)]
@@ -553,7 +539,7 @@
   (testing "it removes the editing index on form submit"
     (let [initial-state {:edit/editing-item-index 0}
           on-submit-actions (->> (#'sut/edit-view initial-state 0 {})
-                                 (select-actions :form [:on :submit]))
+                                 (tu/select-actions :form [:on :submit]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {}
                                                         on-submit-actions)]
@@ -572,7 +558,7 @@
                            :edit/draft input
                            :app/todo-items [item]}
             on-unmount-actions (->> (#'sut/edit-view initial-state 0 item)
-                                    (select-actions :form [:replicant/on-unmount]))
+                                    (tu/select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
                                                           on-unmount-actions)]
@@ -598,7 +584,7 @@
                            :edit/draft input
                            :app/todo-items items}
             on-unmount-actions (->> (#'sut/edit-view initial-state 1 (second items))
-                                    (select-actions :form [:replicant/on-unmount]))
+                                    (tu/select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
                                                           on-unmount-actions)]
@@ -640,7 +626,7 @@
                              :edit/draft input
                              :app/todo-items items}
               on-unmount-actions (->> (#'sut/edit-view initial-state 1 (second items))
-                                      (select-actions :form [:replicant/on-unmount]))
+                                      (tu/select-actions :form [:replicant/on-unmount]))
               {:keys [new-state]} (a/handle-actions initial-state
                                                     {}
                                                     on-unmount-actions)]
@@ -673,7 +659,7 @@
                              :app/todo-items initial-items}
             unmounting-state (assoc rendering-state :edit/keyup-code "Escape")
             on-unmount-actions (->> (#'sut/edit-view rendering-state 1 item)
-                                    (select-actions :form [:replicant/on-unmount]))
+                                    (tu/select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions unmounting-state
                                                           {}
                                                           on-unmount-actions)]
