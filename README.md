@@ -106,7 +106,7 @@ Since the state is immutable data, each test is completely isolated, there is no
 
 #### Work in progress
 
-The test suite is not yet complete. It's about 30% done. It's being worked on and we should soon be done (you can help, if you like). When the tests are done we hopefully will cover more than 90% of the TodoMVC test suite.
+The test suite is not yet complete, but most of them are done. When hope to be able to cover more than 90% of what the TodoMVC test suite covers.
 
 ### Read more about the general approach in the mini-app example
 
