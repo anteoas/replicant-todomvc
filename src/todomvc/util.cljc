@@ -25,7 +25,7 @@
                      (some-> acc (unchecked-get k)))
                    object
                    path)
-           :clj (get-in object (map keyword path))))
+     :clj (get-in object (map keyword path))))
 
 (defn ->js
   "Converts a Clojure map to a JavaScript object.

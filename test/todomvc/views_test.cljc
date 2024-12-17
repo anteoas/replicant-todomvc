@@ -68,49 +68,48 @@
                      (map set)))
         "all form-submits have a prevent-default action")))
 
-#_{:clj-kondo/ignore [:private-call]}
 (deftest items-footer-view
   (testing "Items footer"
-    (is (seq (l/select :.footer (sut/items-footer-view {})))
+    (is (seq (l/select :.footer (#'sut/items-footer-view {})))
         "it renders a .footer element")
 
     (testing "Clear completed"
       (is (empty? (l/select :button.clear-completed
-                            (sut/items-footer-view
+                            (#'sut/items-footer-view
                              {:app/todo-items
                               []})))
           "it does not render a button.clear-completed element when there are no items")
       (is (empty? (l/select :button.clear-completed
-                            (sut/items-footer-view
+                            (#'sut/items-footer-view
                              {:app/todo-items
                               [{:item/title "Test Item" :item/completed? false}]})))
           "it does not render a button.clear-completed element when all items are active")
       (is (seq (l/select :button.clear-completed
-                         (sut/items-footer-view
+                         (#'sut/items-footer-view
                           {:app/todo-items
                            [{:item/title "Test Item" :item/completed? true}]})))
           "it renders a button.clear-completed element when there are completed items")))
 
   (testing "Active count"
-    (is (seq (l/select :.todo-count (sut/items-footer-view {})))
+    (is (seq (l/select :.todo-count (#'sut/items-footer-view {})))
         "it renders a .todo-count element")
     (is (= "0 items left"
            (->> (l/select [:.todo-count]
-                          (sut/items-footer-view
+                          (#'sut/items-footer-view
                            {:app/todo-items
                             [{:item/title "Test Item" :item/completed? true}]}))
                 (l/get-text)))
         "it displays the number of active items pluralized when == 0")
     (is (= "1 item left"
            (->> (l/select [:.todo-count]
-                          (sut/items-footer-view
+                          (#'sut/items-footer-view
                            {:app/todo-items
                             [{:item/title "Test Item" :item/completed? false}]}))
                 (l/get-text)))
         "it displays the number of active items non-pluralized when == 1")
     (is (= "2 items left"
            (->> (l/select [:.todo-count]
-                          (sut/items-footer-view
+                          (#'sut/items-footer-view
                            {:app/todo-items
                             [{:item/title "Test Item" :item/completed? false}
                              {:item/title "Test Item" :item/completed? true}
@@ -123,19 +122,18 @@
                  [{:item/title "Test Item" :item/completed? false}
                   {:item/title "Test Item" :item/completed? true}
                   {:item/title "Test Item" :item/completed? false}]}
-          view (sut/items-footer-view (assoc state :app/item-filter :filter/all))]
+          view (#'sut/items-footer-view (assoc state :app/item-filter :filter/all))]
       (is (some #{"selected"}
                 (->> (l/select :a view)
                      (select-attribute [] [:class])
                      first))
           "it marks the 'All' filter as selected when the filter is 'all'"))))
 
-#_{:clj-kondo/ignore [:private-call]}
 (deftest clear-completed-items
   (testing "Clearing completed items"
     (let [state {:app/todo-items [{:item/title "Completed Todo" :item/completed? true}
                                   {:item/title "Active Todo" :item/completed? false}]}
-          view (sut/items-footer-view state)
+          view (#'sut/items-footer-view state)
           on-click-actions (select-actions :button.clear-completed [:on :click] view)
           {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
       (is (= 1 (count (:app/todo-items new-state)))
@@ -145,11 +143,10 @@
       (is (empty? effects)
           "it has no side effects apart from the state change"))))
 
-#_{:clj-kondo/ignore [:private-call]}
 (deftest item-view
   (testing "item rendering"
     (let [item {:item/title "Test Item"}
-          view (sut/item-view {:app/item-filter :filter/all} 0 item)]
+          view (#'sut/item-view {:app/item-filter :filter/all} 0 item)]
       (is (seq (l/select [:li :.view] view))
           "it renders the item in a list item containing a .view element")
       (is (= [[:label (:item/title item)]]
@@ -158,67 +155,67 @@
 
     (testing "filtering"
       (is (not= nil?
-                (sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
-                                                                 :item/completed? true}))
+                (#'sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
+                                                                   :item/completed? true}))
           "it renders a completed item when filtering on all")
       (is (not= nil?
-                (sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
-                                                                 :item/completed? false}))
+                (#'sut/item-view {:app/item-filter :filter/all} 0 {:item/title "Test Item"
+                                                                   :item/completed? false}))
           "it renders an uncompleted item when filtering on all")
       (is (nil?
-           (sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
-                                                                  :item/completed? false}))
+           (#'sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
+                                                                    :item/completed? false}))
           "it does not render an uncompleted item when filtering on completed")
       (is (not= nil?
-                (sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
-                                                                       :item/completed? true}))
+                (#'sut/item-view {:app/item-filter :filter/completed} 0 {:item/title "Test Item"
+                                                                         :item/completed? true}))
           "it renders a completed items when filtering on completed")
       (is (nil?
-           (sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
-                                                               :item/completed? true}))
+           (#'sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
+                                                                 :item/completed? true}))
           "it does not render a completed item when filtering on active")
       (is (not= nil?
-                (sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
-                                                                    :item/completed? false}))
+                (#'sut/item-view {:app/item-filter :filter/active} 0 {:item/title "Test Item"
+                                                                      :item/completed? false}))
           "it renders an uncompleted item when filtering on active"))
 
     (testing "editing"
       (is (some #{"editing"}
-                (->> (sut/item-view {:edit/editing-item-index 0
-                                     :app/item-filter :filter/all}
-                                    0
-                                    {})
+                (->> (#'sut/item-view {:edit/editing-item-index 0
+                                       :app/item-filter :filter/all}
+                                      0
+                                      {})
                      (select-attribute :li [:class])
                      first))
           "The item should have the 'editing' class when it is being edited")
       (is (not-any? #{"editing"}
-                    (->> (sut/item-view {:edit/editing-item-index 0
-                                         :app/item-filter :filter/all}
-                                        1
-                                        {})
+                    (->> (#'sut/item-view {:edit/editing-item-index 0
+                                           :app/item-filter :filter/all}
+                                          1
+                                          {})
                          (select-attribute :li [:class])
                          first))
           "The item should not have the 'editing' class when another item is being edited")
       (is (not-any? #{"editing"}
-                    (->> (sut/item-view {:app/item-filter :filter/all}
-                                        1
-                                        {})
+                    (->> (#'sut/item-view {:app/item-filter :filter/all}
+                                          1
+                                          {})
                          (select-attribute :li [:class])
                          first))
           "The item should not have the 'editing' class when no item is being edited"))
 
     (testing "completed"
       (is (some #{"completed"}
-                (->> (sut/item-view {:app/item-filter :filter/all}
-                                    0 {:item/title "Test Item"
-                                       :item/completed? true})
+                (->> (#'sut/item-view {:app/item-filter :filter/all}
+                                      0 {:item/title "Test Item"
+                                         :item/completed? true})
                      (select-attribute :li [:class])
                      first))
           "The item should have the 'completed' class when it is completed")
       (is (not-any? #{"completed"}
-                    (->> (sut/item-view {:app/item-filter :filter/all}
-                                        0 {:item/title "Test Item"
-                                           :item/completed? false})
+                    (->> (#'sut/item-view {:app/item-filter :filter/all}
+                                          0 {:item/title "Test Item"
+                                             :item/completed? false})
                          (select-attribute :li [:class])
                          first))
           "The item should not have the 'completed' class when it is uncompleted")))
@@ -228,7 +225,7 @@
           state {:app/item-filter :filter/all}
           item {:item/title "Test Item"
                 :item/completed? false}
-          view (sut/item-view state index item)
+          view (#'sut/item-view state index item)
           on-dblclick-actions (select-actions :li [:on :dblclick] view)
           {:keys [new-state]} (a/handle-actions state {} on-dblclick-actions)]
       (is (= index
@@ -245,7 +242,7 @@
                    :app/todo-items [{:item/title "Test Item" :item/completed? false}]
                    :app/mark-all-checkbox-checked? false}
             item (first (:app/todo-items state))
-            view (sut/item-view state 0 item)]
+            view (#'sut/item-view state 0 item)]
         (is (false? (-> (select-attribute :input.toggle [:checked] view) first))
             "it is not checked initially")
         (let [on-change-actions (select-actions :input.toggle [:on :change] view)
@@ -261,7 +258,7 @@
                    :app/todo-items [{:item/title "Test Item" :item/completed? true}]
                    :app/mark-all-checkbox-checked? true}
             item (first (:app/todo-items state))
-            view (sut/item-view state 0 item)]
+            view (#'sut/item-view state 0 item)]
         (is (true? (-> (select-attribute :input.toggle [:checked] view) first))
             "it is checked initially")
         (let [on-change-actions (select-actions :input.toggle [:on :change] view)
@@ -272,7 +269,7 @@
               "it updates the mark-all state to false")))))
 
   (testing "delete button"
-    (is (seq (l/select :button.destroy (sut/item-view {:app/item-filter :filter/all} 0 {})))
+    (is (seq (l/select :button.destroy (#'sut/item-view {:app/item-filter :filter/all} 0 {})))
         "it renders a delete button")
 
     (testing "Last item"
@@ -281,7 +278,7 @@
                                      :item/completed? true}]
                    :app/mark-all-checkbox-checked? true}
             item (first (:app/todo-items state))
-            view (sut/item-view state 0 item)
+            view (#'sut/item-view state 0 item)
             on-click-actions (select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (empty? (:app/todo-items new-state))
@@ -298,7 +295,7 @@
                                     {:item/title "Test Item 3" :item/completed? true}]
                    :app/mark-all-checkbox-checked? false}
             item (second (:app/todo-items state))
-            view (sut/item-view state 1 item)
+            view (#'sut/item-view state 1 item)
             on-click-actions (select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (= 2 (count (:app/todo-items new-state)))
@@ -315,7 +312,7 @@
                                     {:item:title "Test Item 3" :item/completed? false}]
                    :app/mark-all-checkbox-checked? false}
             item (second (:app/todo-items state))
-            view (sut/item-view state 1 item)
+            view (#'sut/item-view state 1 item)
             on-click-actions (select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (= 2 (count (:app/todo-items new-state)))
@@ -332,7 +329,7 @@
                                     {:item:title "Test Item 3" :item/completed? true}]
                    :app/mark-all-checkbox-checked? false}
             item (second (:app/todo-items state))
-            view (sut/item-view state 1 item)
+            view (#'sut/item-view state 1 item)
             on-click-actions (select-actions :button.destroy [:on :click] view)
             {:keys [new-state effects]} (a/handle-actions state {} on-click-actions)]
         (is (= 2 (count (:app/todo-items new-state)))
@@ -342,10 +339,9 @@
         (is (true? (:app/mark-all-checkbox-checked? new-state))
             "it updates the mark-all state false when some remaining items are completed and some are uncompleted")))))
 
-#_{:clj-kondo/ignore [:private-call]}
 (deftest maybe-add
   (testing "Adding non-blank"
-    (let [result (sut/maybe-add [] "New item")]
+    (let [result (#'sut/maybe-add [] "New item")]
       (is (= 1
              (count result))
           "it adds an item")
@@ -356,27 +352,26 @@
           "it adds the item as uncompleted")
       (is (uuid? (:item/id (first result)))
           "it gives the item an id"))
-    (is (= "Second item" (-> (sut/maybe-add [{:item/title "First item"}] "Second item")
+    (is (= "Second item" (-> (#'sut/maybe-add [{:item/title "First item"}] "Second item")
                              second
                              :item/title))
         "it adds the item to the end of the list")
-    (is (= "New item" (-> (sut/maybe-add [] "  New item  ")
+    (is (= "New item" (-> (#'sut/maybe-add [] "  New item  ")
                           first
                           :item/title))
         "it trims the string before adding using it as the title for the item"))
 
   (testing "Blank or empty"
-    (is (= 0 (count (sut/maybe-add [] "")))
+    (is (= 0 (count (#'sut/maybe-add [] "")))
         "it does not add a new item when the string is empty")
-    (is (= 0 (count (sut/maybe-add [] "   ")))
+    (is (= 0 (count (#'sut/maybe-add [] "   ")))
         "it does not add a new item when the string is blank")))
 
-#_{:clj-kondo/ignore [:private-call]}
 (defn test-add-view-mount [state]
   #_{:clj-kondo/ignore [:inline-def :clojure-lsp/unused-public-var]}
   (comment
     (def state {}))
-  (let [on-mount-actions (->> (sut/add-view state)
+  (let [on-mount-actions (->> (#'sut/add-view state)
                               (select-actions :input.new-todo [:replicant/on-mount]))
         {:keys [new-state effects] :as result} (a/handle-actions state
                                                                  {:replicant/node :input-dom-node}
@@ -387,13 +382,12 @@
         "it does so without other side-effects")
     result))
 
-#_{:clj-kondo/ignore [:private-call]}
 (defn test-add-view-input [state add-text]
   #_{:clj-kondo/ignore [:inline-def :clojure-lsp/unused-public-var]}
   (comment
     (def state {:add/draft-input-element :input-dom-node})
     (def add-text "Input"))
-  (let [on-input-actions (->> (sut/add-view state)
+  (let [on-input-actions (->> (#'sut/add-view state)
                               (select-actions :input.new-todo [:on :input]))
         {:keys [new-state effects] :as result} (a/handle-actions state
                                                                  {:replicant/js-event (util/->js {:target {:value add-text}})}
@@ -404,7 +398,6 @@
         "it does so without other side-effects")
     result))
 
-#_{:clj-kondo/ignore [:private-call]}
 (deftest add-view
   (testing "it saves draft input element on mount"
     (let [initial-state {:app/todo-items [{:item/completed? true
@@ -417,7 +410,7 @@
               {:keys [new-state]} (test-add-view-input new-state input-text)]
 
           (testing "it handles the form submit event"
-            (let [on-submit-actions (->> (sut/add-view new-state)
+            (let [on-submit-actions (->> (#'sut/add-view new-state)
                                          (select-actions :form [:on :submit]))
                   {:keys [new-state effects]} (a/handle-actions new-state
                                                                 {}
@@ -445,7 +438,7 @@
               {:keys [new-state]} (test-add-view-input new-state untrimmed-test)]
 
           (testing "it handles the form submit event"
-            (let [on-submit-actions (->> (sut/add-view new-state)
+            (let [on-submit-actions (->> (#'sut/add-view new-state)
                                          (select-actions :form [:on :submit]))
                   {:keys [new-state]} (a/handle-actions new-state
                                                         {}
@@ -459,7 +452,7 @@
               {:keys [new-state]} (test-add-view-input new-state input-text)]
 
           (testing "it handles the form submit event"
-            (let [on-submit-actions (->> (sut/add-view new-state)
+            (let [on-submit-actions (->> (#'sut/add-view new-state)
                                          (select-actions :form [:on :submit]))
                   {:keys [new-state effects]} (a/handle-actions new-state
                                                                 {}
@@ -477,28 +470,27 @@
                         (set effects))
                   "the input element remains blank"))))))))
 
-#_{:clj-kondo/ignore [:private-call]}
 (deftest edit-view
   (testing "rendering the edit view"
     (let [initial-state {:edit/editing-item-index 0}
-          edit-view (sut/edit-view initial-state 0 {})]
+          edit-view (#'sut/edit-view initial-state 0 {})]
       (is (seq (l/select :input.edit edit-view))
           "it renders the edit view when the index matches the editing item index"))
 
     (let [initial-state {}
-          edit-view (sut/edit-view initial-state 0 {})]
+          edit-view (#'sut/edit-view initial-state 0 {})]
       (is (nil? edit-view)
           "it does not render the edit view when its index does not match the editing item index"))
 
     (let [initial-state  {:edit/editing-item-index 0
                           :edit/keyup-code "Escape"}
-          edit-view (sut/edit-view initial-state 0 {})]
+          edit-view (#'sut/edit-view initial-state 0 {})]
       (is (nil? edit-view)
           "it does not render the edit view when the keycode is 'Escape'")))
 
   (testing "edit-view on mount"
     (let [initial-state {:edit/editing-item-index 0}
-          on-mount-actions (->> (sut/edit-view initial-state 0 {})
+          on-mount-actions (->> (#'sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:replicant/on-mount]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/node :input-dom-node}
@@ -513,14 +505,14 @@
   (testing "it populates the edit view from the edited item"
     (let [item {:item/title "Title"}
           initial-state {:edit/editing-item-index 0}
-          edit-view (sut/edit-view initial-state 0 item)]
+          edit-view (#'sut/edit-view initial-state 0 item)]
       (is (= [(:item/title item)]
              (select-attribute :input.edit [:value] edit-view))
           "it populates the input with the item title")))
 
   (testing "it updates the draft from the input event"
     (let [initial-state {:edit/editing-item-index 0}
-          on-input-actions (->> (sut/edit-view initial-state 0 {})
+          on-input-actions (->> (#'sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:on :input]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/js-event (util/->js {:target {:value "Input"}})}
@@ -533,7 +525,7 @@
 
   (testing "it saves the keycode to the state on keyup"
     (let [initial-state {:edit/editing-item-index 0}
-          on-keyup-actions (->> (sut/edit-view initial-state 0 {})
+          on-keyup-actions (->> (#'sut/edit-view initial-state 0 {})
                                 (select-actions :input.edit [:on :keyup]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {:replicant/js-event (util/->js {:code "Escape"})}
@@ -546,7 +538,7 @@
 
   (testing "it removes the editing index on blur"
     (let [initial-state {:edit/editing-item-index 0}
-          on-blur-actions (->> (sut/edit-view initial-state 0 {})
+          on-blur-actions (->> (#'sut/edit-view initial-state 0 {})
                                (select-actions :input.edit [:on :blur]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {}
@@ -560,7 +552,7 @@
 
   (testing "it removes the editing index on form submit"
     (let [initial-state {:edit/editing-item-index 0}
-          on-submit-actions (->> (sut/edit-view initial-state 0 {})
+          on-submit-actions (->> (#'sut/edit-view initial-state 0 {})
                                  (select-actions :form [:on :submit]))
           {:keys [new-state effects]} (a/handle-actions initial-state
                                                         {}
@@ -579,7 +571,7 @@
             initial-state {:edit/editing-item-index 0
                            :edit/draft input
                            :app/todo-items [item]}
-            on-unmount-actions (->> (sut/edit-view initial-state 0 item)
+            on-unmount-actions (->> (#'sut/edit-view initial-state 0 item)
                                     (select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
@@ -605,7 +597,7 @@
                            :edit/keyup-code "Enter"
                            :edit/draft input
                            :app/todo-items items}
-            on-unmount-actions (->> (sut/edit-view initial-state 1 (second items))
+            on-unmount-actions (->> (#'sut/edit-view initial-state 1 (second items))
                                     (select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions initial-state
                                                           {}
@@ -625,28 +617,29 @@
                           :item/completed? true}
           uncompleted-item {:item/title "Title2"
                             :item/completed? false}]
-      (doseq [[items mark-all-state mark-all-case items-behaviour] [[[{:item/title "Title1"
-                                                                       :item/completed? false}
-                                                                      completed-item
-                                                                      {:item/title "Title3"
-                                                                       :item/completed? false}]
-                                                                     false
-                                                                     "remaining items are uncompleted"
-                                                                     "it sets the mark-all state to false"]
-                                                                    [[{:item/title "Title1"
-                                                                       :item/completed? true}
-                                                                      uncompleted-item
-                                                                      {:item/title "Title3"
-                                                                       :item/completed? true}]
-                                                                     true
-                                                                     "remaining items are completed"
-                                                                     "it sets the mark-all state to true"]]]
+      (doseq [[items mark-all-state mark-all-case items-behaviour]
+              [[[{:item/title "Title1"
+                  :item/completed? false}
+                 completed-item
+                 {:item/title "Title3"
+                  :item/completed? false}]
+                false
+                "remaining items are uncompleted"
+                "it sets the mark-all state to false"]
+               [[{:item/title "Title1"
+                  :item/completed? true}
+                 uncompleted-item
+                 {:item/title "Title3"
+                  :item/completed? true}]
+                true
+                "remaining items are completed"
+                "it sets the mark-all state to true"]]]
         (let [input ""
               initial-state {:edit/editing-item-index 1
                              :edit/keyup-code "Enter"
                              :edit/draft input
                              :app/todo-items items}
-              on-unmount-actions (->> (sut/edit-view initial-state 1 (second items))
+              on-unmount-actions (->> (#'sut/edit-view initial-state 1 (second items))
                                       (select-actions :form [:replicant/on-unmount]))
               {:keys [new-state]} (a/handle-actions initial-state
                                                     {}
@@ -679,7 +672,7 @@
                              :edit/draft "Input"
                              :app/todo-items initial-items}
             unmounting-state (assoc rendering-state :edit/keyup-code "Escape")
-            on-unmount-actions (->> (sut/edit-view rendering-state 1 item)
+            on-unmount-actions (->> (#'sut/edit-view rendering-state 1 item)
                                     (select-actions :form [:replicant/on-unmount]))
             {:keys [new-state effects]} (a/handle-actions unmounting-state
                                                           {}
