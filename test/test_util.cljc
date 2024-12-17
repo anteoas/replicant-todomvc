@@ -1,5 +1,4 @@
-;; Dummy file to make the test runner use the baldr test reporting
-(ns todomvc.test-util
+(ns test-util
   (:require [lookup.core :as l]
             pez.baldr))
 
