@@ -70,13 +70,19 @@
         "it displays the number of active items pluralized when > 1"))
 
   (testing "Filter links"
-    (let [state {:app/todo-items
-                 [{:item/title "Test Item" :item/completed? false}
-                  {:item/title "Test Item" :item/completed? true}
-                  {:item/title "Test Item" :item/completed? false}]}
-          view (#'sut/items-footer-view (assoc state :app/item-filter :filter/all))]
-      (is (some #{"selected"}
-                (->> (l/select :a view)
-                     (tu/select-attribute [] [:class])
-                     first))
-          "it marks the 'All' filter as selected when the filter is 'all'"))))
+    (let [filter->href (fn [item-filter]
+                         (->> (l/select :a (#'sut/items-footer-view {:app/item-filter item-filter}))
+                              (filter (fn [element]
+                                        (some #{"selected"} (first (tu/select-attribute :a [:class] element)))))
+                              first
+                              (tu/select-attribute :a [:href])
+                              first))]
+      (is (= "#/"
+             (filter->href :filter/all))
+          "it marks the 'All' filter as selected when the filter is 'all'")
+      (is (= "#/active"
+             (filter->href :filter/active))
+          "it marks the 'Active' filter as selected when the filter is 'active'")
+      (is (= "#/completed"
+             (filter->href :filter/completed))
+          "it marks the 'Completed' filter as selected when the filter is 'completed'"))))
