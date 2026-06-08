@@ -1,5 +1,5 @@
 (ns todomvc.app
-  (:require [gadget.inspector :as inspector]
+  (:require [dataspex.core :as dataspex]
             [replicant.dom :as r-dom]
             [todomvc.actions :as actions]
             [todomvc.effects :as effects]
@@ -26,7 +26,8 @@
 
 (defn ^:export init! []
   (db/init!)
-  (inspector/inspect "App state" db/!state)
+  (dataspex/inspect "App state" db/!state {:track-changes? true
+                                            :history-limit 2500})
   (r-dom/set-dispatch! event-handler)
   (router/start! router/routes event-handler)
   (db/watch! render!)
